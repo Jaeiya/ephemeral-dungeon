@@ -1,16 +1,9 @@
 package lib
 
-type CoinRate struct {
+var coinExchangeRates = []struct {
 	value int
 	name  string
-}
-
-type CoinAmount struct {
-	Value int
-	Name  string
-}
-
-var coinExchangeRates = []CoinRate{
+}{
 	{10_000_000_000, "Mithril"},
 	{100_000_000, "Iridium"},
 	{1_000_000, "Platinum"},
@@ -19,48 +12,47 @@ var coinExchangeRates = []CoinRate{
 	{1, "Bronze"},
 }
 
-var coinMap = map[int]string{}
-
-type Currency struct {
-	balance int
+type Denomination struct {
+	Value int
+	Name  string
 }
 
-func NewCurrency(v int) Currency {
-	return Currency{v}
+type Tender struct {
+	amount int
 }
 
-func (c *Currency) Add(v int) {
-	if v < 0 {
+func NewTender(v int) Tender {
+	return Tender{v}
+}
+
+func (t *Tender) Add(v Tender) {
+	if v.amount < 0 {
 		panic("currency::adding negative values is not allowed")
 	}
-	c.balance += v
+	t.amount += v.amount
 }
 
-func (c *Currency) Subtract(v int) {
-	if v > c.balance {
+func (t *Tender) Subtract(v Tender) {
+	if v.amount > t.amount {
 		panic("currency::subtracting more than balance not allowed")
 	}
-	c.balance -= v
+	t.amount -= v.amount
 }
 
-func (c Currency) Balance() int {
-	return c.balance
-}
-
-func (c Currency) Amount() []CoinAmount {
-	if c.balance == 0 {
-		return []CoinAmount{}
+func (t Tender) Denominations() []Denomination {
+	if t.amount == 0 {
+		return []Denomination{}
 	}
 
-	coins := make([]CoinAmount, len(coinExchangeRates))
-	remaining := c.balance
+	coins := make([]Denomination, len(coinExchangeRates))
+	remaining := t.amount
 
 	for i, rate := range coinExchangeRates {
-		if c.balance >= rate.value {
-			coins[i] = CoinAmount{remaining / rate.value, rate.name}
+		if t.amount >= rate.value {
+			coins[i] = Denomination{remaining / rate.value, rate.name}
 			remaining %= rate.value
 		} else {
-			coins[i] = CoinAmount{0, rate.name}
+			coins[i] = Denomination{0, rate.name}
 		}
 	}
 
