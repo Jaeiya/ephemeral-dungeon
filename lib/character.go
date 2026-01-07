@@ -1,4 +1,4 @@
-package character
+package lib
 
 import (
 	"math"
@@ -10,6 +10,10 @@ const (
 	oneThird   float64 = 1.0 / 3.0
 )
 
+type Inventory struct {
+	Items []Item
+}
+
 type Character struct {
 	strength     int // Physical formidability
 	dexterity    int // Agility, evasion, ranged weapons, dodging...
@@ -18,6 +22,7 @@ type Character struct {
 	charisma     int // Benefits or Deficits to social interactions
 	armor        int
 	level        int
+	inventory    Inventory
 	xp           struct {
 		total   int
 		current int
