@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -19,6 +20,9 @@ func NewGame() error {
 	gs.cmdMap = map[string]func([]string){
 		"look": gs.Look,
 		"l":    gs.Look,
+
+		"examine": gs.Examine,
+		"x":       gs.Examine,
 
 		"inv":       gs.Inventory,
 		"inventory": gs.Inventory,
@@ -83,9 +87,17 @@ func (g *GameState) Look(args []string) {
 		}
 
 		object := strings.Join(args[startIndex:], " ")
-		fmt.Printf("We're looking at a %s\n\n", object)
+		fmt.Printf("We're examining %s\n\n", object)
 		return
 	}
+}
+
+func (g *GameState) Examine(args []string) {
+	if len(args) == 0 {
+		fmt.Printf("Nothing to examine\n\n")
+		return
+	}
+	g.Look(slices.Concat([]string{"at"}, args))
 }
 
 func (g GameState) Inventory(args []string) {
