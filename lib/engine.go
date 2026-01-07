@@ -101,5 +101,10 @@ func (g *GameState) Examine(args []string) {
 }
 
 func (g GameState) Inventory(args []string) {
-	fmt.Println("Display the inventory")
+	playerItems := g.player.inventory.Items
+	if len(playerItems) == 0 {
+		fmt.Printf("Nothing in your inventory\n\n")
+		return
+	}
+	fmt.Printf("Oh, you do have some stuff in your inventory!\n\n")
 }
