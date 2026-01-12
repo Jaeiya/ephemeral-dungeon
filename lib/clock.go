@@ -4,9 +4,10 @@ import "fmt"
 
 const (
 	//🟠 Should always be a multiple of 60
-	secondsPerTick = 15
-	ticksPerMinute = 60 / secondsPerTick
-	ticksPerHour   = ticksPerMinute * 60
+	secondsPerTick int = 15
+	ticksPerMinute int = 60 / secondsPerTick
+	ticksPerHour   int = ticksPerMinute * 60
+	hourSeconds    int = 60 * 60
 )
 
 type TimePeriod int
@@ -40,69 +41,42 @@ func (tp TimePeriod) String() string {
 }
 
 type WorldClock struct {
-	ticks       int
-	elapsedTime struct {
-		days    int
-		hours   int
-		minutes int
-		seconds int
-	}
-	relativeTime struct {
-		day     int
-		hours   int
-		minutes int
-		seconds int
-		isPM    bool
-	}
+	ticks int
 }
 
-func NewWorldClock() WorldClock {
+func NewWorldClock() *WorldClock {
 	wc := WorldClock{}
 	// Always start game at 6:00 AM
 	wc.TickHours(6)
-	return wc
+	return &wc
 }
 
 func (wc *WorldClock) Tick(value int) {
 	wc.ticks += value
-
-	et := &wc.elapsedTime
-	et.seconds = wc.ticks * secondsPerTick
-	et.minutes = et.seconds / 60
-	et.hours = et.minutes / 60
-	et.days = et.hours / 24
-
-	rt := &wc.relativeTime
-	rt.seconds = et.seconds % 60
-	rt.minutes = et.minutes % 60
-	rt.hours = et.hours % 24
-	rt.day = et.days
-
-	if rt.hours < 12 {
-		if rt.hours == 0 {
-			rt.hours = 12
-		}
-		rt.isPM = false
-	} else {
-		rt.hours -= 12
-		if rt.hours == 0 {
-			rt.hours = 12
-		}
-		rt.isPM = true
-	}
 }
 
-func (wc WorldClock) String() string {
-	rt := wc.relativeTime
+func (wc *WorldClock) String() string {
+	ts := wc.totalSeconds()
+
+	sec := ts % 60
+	min := (ts / 60) % 60
+	hour := (ts / hourSeconds) % 24
+
 	amPM := "AM"
-	if rt.isPM {
+	if hour >= 12 {
+		hour -= 12
 		amPM = "PM"
 	}
+
+	if hour == 0 {
+		hour = 12
+	}
+
 	return fmt.Sprintf(
 		"%d:%02d:%02d %s (%s)",
-		rt.hours,
-		rt.minutes,
-		rt.seconds,
+		hour,
+		min,
+		sec,
 		amPM,
 		wc.TimePeriod(),
 	)
@@ -120,45 +94,39 @@ func (wc *WorldClock) TickDays(value int) {
 	wc.Tick(ticksPerHour * 24 * value)
 }
 
-func (wc WorldClock) ElapsedTime() (int, int, int, int) {
-	et := wc.elapsedTime
-	return et.days, et.hours, et.minutes, et.seconds
-}
-
-func (wc WorldClock) Time() (int, int, int, int, bool) {
-	rt := wc.relativeTime
-	return rt.day, rt.hours, rt.minutes, rt.seconds, rt.isPM
-}
-
-func (wc WorldClock) TimePeriod() TimePeriod {
-	hour := wc.relativeTime.hours
-	isPM := wc.relativeTime.isPM
-	notTwelve := hour != 12
+func (wc *WorldClock) TimePeriod() TimePeriod {
+	h := wc.hour24()
 
 	switch {
-	case (!isPM && hour >= 10 && notTwelve) || (isPM && hour == 12) || (isPM && hour < 2):
-		return Day
 
-	case !isPM && hour >= 6 && notTwelve:
-		return Morning
-
-	case !isPM && hour >= 4 && notTwelve:
+	case h >= 4 && h < 6:
 		return Dawn
 
-	case (isPM && hour >= 8) || (!isPM && hour >= 1):
-		return Night
+	case h >= 6 && h < 10:
+		return Morning
 
-	case isPM && hour >= 5:
-		return Evening
+	// Up to 2:59 PM
+	case h >= 10 && h < 15:
+		return Day
 
-	case isPM && hour >= 2:
+	// Up to 4:59 PM
+	case h >= 15 && h < 17:
 		return Afternoon
 
+	// Up to 7:59 PM
+	case h >= 17 && h < 20:
+		return Evening
+
 	default:
-		amPM := "AM"
-		if isPM {
-			amPM = "PM"
-		}
-		panic(fmt.Errorf("missing time period for: %d %s", hour, amPM))
+		// Captures 8:00 PM to 3:59 AM
+		return Night
 	}
+}
+
+func (wc *WorldClock) totalSeconds() int {
+	return wc.ticks * secondsPerTick
+}
+
+func (wc *WorldClock) hour24() int {
+	return (wc.totalSeconds() / hourSeconds) % 24
 }
