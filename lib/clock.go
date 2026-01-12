@@ -12,15 +12,32 @@ const (
 type TimePeriod int
 
 const (
-	Dawn       TimePeriod = iota //  4:00 AM
-	Morning                      //  6:00 AM
-	MidMorning                   //  9:00 AM
-	Day                          // 12:00 PM
-	Afternoon                    //  2:30 PM
-	Evening                      //  5:00 PM
-	Twilight                     //  7:00 PM
-	Night                        //  8:00 PM
+	Dawn      TimePeriod = iota //  4:00 AM
+	Morning                     //  6:00 AM
+	Day                         // 10:00 PM
+	Afternoon                   //  2:00 PM
+	Evening                     //  5:00 PM
+	Night                       //  8:00 PM
 )
+
+func (tp TimePeriod) String() string {
+	switch tp {
+	case Dawn:
+		return "Dawn"
+	case Morning:
+		return "Morning"
+	case Day:
+		return "Day"
+	case Afternoon:
+		return "Afternoon"
+	case Evening:
+		return "Evening"
+	case Night:
+		return "Night"
+	default:
+		panic(fmt.Errorf("invalid time period: %d", tp))
+	}
+}
 
 type WorldClock struct {
 	ticks       int
@@ -81,7 +98,14 @@ func (wc WorldClock) String() string {
 	if rt.isPM {
 		amPM = "PM"
 	}
-	return fmt.Sprintf("%d:%02d:%02d %s", rt.hours, rt.minutes, rt.seconds, amPM)
+	return fmt.Sprintf(
+		"%d:%02d:%02d %s (%s)",
+		rt.hours,
+		rt.minutes,
+		rt.seconds,
+		amPM,
+		wc.TimePeriod(),
+	)
 }
 
 func (wc *WorldClock) TickMinutes(value int) {
@@ -104,4 +128,37 @@ func (wc WorldClock) ElapsedTime() (int, int, int, int) {
 func (wc WorldClock) Time() (int, int, int, int, bool) {
 	rt := wc.relativeTime
 	return rt.day, rt.hours, rt.minutes, rt.seconds, rt.isPM
+}
+
+func (wc WorldClock) TimePeriod() TimePeriod {
+	hour := wc.relativeTime.hours
+	isPM := wc.relativeTime.isPM
+	notTwelve := hour != 12
+
+	switch {
+	case (!isPM && hour >= 10 && notTwelve) || (isPM && hour == 12) || (isPM && hour < 2):
+		return Day
+
+	case !isPM && hour >= 6 && notTwelve:
+		return Morning
+
+	case !isPM && hour >= 4 && notTwelve:
+		return Dawn
+
+	case (isPM && hour >= 8) || (!isPM && hour >= 1):
+		return Night
+
+	case isPM && hour >= 5:
+		return Evening
+
+	case isPM && hour >= 2:
+		return Afternoon
+
+	default:
+		amPM := "AM"
+		if isPM {
+			amPM = "PM"
+		}
+		panic(fmt.Errorf("missing time period for: %d %s", hour, amPM))
+	}
 }
