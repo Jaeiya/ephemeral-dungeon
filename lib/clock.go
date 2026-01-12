@@ -62,10 +62,11 @@ func (wc *WorldClock) Tick(value int) {
 	rt.day = et.days
 
 	if rt.hours < 12 {
+		if rt.hours == 0 {
+			rt.hours = 12
+		}
 		rt.isPM = false
-	}
-
-	if rt.hours >= 12 {
+	} else {
 		rt.hours -= 12
 		if rt.hours == 0 {
 			rt.hours = 12
