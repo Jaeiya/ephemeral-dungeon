@@ -1,6 +1,9 @@
 package lib
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	//🟠 Should always be a multiple of 60
@@ -8,6 +11,7 @@ const (
 	ticksPerMinute int = 60 / secondsPerTick
 	ticksPerHour   int = ticksPerMinute * 60
 	hourSeconds    int = 60 * 60
+	daySeconds     int = hourSeconds * 24
 )
 
 type TimePeriod int
@@ -121,6 +125,45 @@ func (wc *WorldClock) TimePeriod() TimePeriod {
 		// Captures 8:00 PM to 3:59 AM
 		return Night
 	}
+}
+
+// Returns the elapsed time in a shorthand string format
+//
+//	Format: `1yr, 0mo, 3d, 4h, 10m`
+func (wc *WorldClock) ElapsedTime() string {
+	ts := wc.totalSeconds()
+
+	min := (ts / 60) % 60
+	hour := (ts / hourSeconds) % 24
+	day := (ts / daySeconds) % 30
+	month := (ts / daySeconds / 30) % 12
+	year := (ts / daySeconds / 30 / 12)
+
+	sb := strings.Builder{}
+
+	showYear := year >= 1
+	showMonth := month >= 1 || showYear
+	showDay := day >= 1 || showMonth
+	showHour := hour >= 1 || showDay
+
+	if showYear {
+		fmt.Fprintf(&sb, "%dyr, ", year)
+	}
+
+	if showMonth {
+		fmt.Fprintf(&sb, "%dmo, ", month)
+	}
+
+	if showDay {
+		fmt.Fprintf(&sb, "%dd, ", day)
+	}
+
+	if showHour {
+		fmt.Fprintf(&sb, "%dh, ", hour)
+	}
+
+	fmt.Fprintf(&sb, "%dm", min)
+	return sb.String()
 }
 
 func (wc *WorldClock) totalSeconds() int {
