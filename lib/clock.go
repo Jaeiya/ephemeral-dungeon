@@ -59,6 +59,18 @@ func (wc *WorldClock) Tick(value int) {
 	wc.ticks += value
 }
 
+func (wc *WorldClock) TickMinutes(value int) {
+	wc.Tick(ticksPerMinute * value)
+}
+
+func (wc *WorldClock) TickHours(value int) {
+	wc.Tick(ticksPerHour * value)
+}
+
+func (wc *WorldClock) TickDays(value int) {
+	wc.Tick(ticksPerHour * 24 * value)
+}
+
 func (wc *WorldClock) String() string {
 	ts := wc.totalSeconds()
 
@@ -84,18 +96,6 @@ func (wc *WorldClock) String() string {
 		amPM,
 		wc.TimePeriod(),
 	)
-}
-
-func (wc *WorldClock) TickMinutes(value int) {
-	wc.Tick(ticksPerMinute * value)
-}
-
-func (wc *WorldClock) TickHours(value int) {
-	wc.Tick(ticksPerHour * value)
-}
-
-func (wc *WorldClock) TickDays(value int) {
-	wc.Tick(ticksPerHour * 24 * value)
 }
 
 func (wc *WorldClock) TimePeriod() TimePeriod {
