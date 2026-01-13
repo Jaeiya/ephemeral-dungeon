@@ -134,7 +134,7 @@ func (wc *WorldClock) ElapsedTime() string {
 	ts := wc.totalSeconds()
 
 	min := (ts / 60) % 60
-	hour := (ts / hourSeconds) % 24
+	hour := wc.hour24()
 	day := (ts / daySeconds) % 30
 	month := (ts / daySeconds / 30) % 12
 	year := (ts / daySeconds / 30 / 12)
