@@ -129,7 +129,11 @@ func (wc *WorldClock) TimePeriod() TimePeriod {
 
 // Returns the elapsed time in a shorthand string format
 //
-//	Format: `1yr, 0mo, 3d, 4h, 10m`
+//	`1yr, 5mo, 3d, 4h, 10m`
+//	`3d, 0h, 10m`
+//	`10m`
+//
+// 🔵 Will only display time units that have value.
 func (wc *WorldClock) ElapsedTime() string {
 	ts := wc.totalSeconds()
 
