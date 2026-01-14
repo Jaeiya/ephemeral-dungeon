@@ -77,7 +77,6 @@ func (gs GameState) Look(args []string) {
 		object := strings.Join(args[1:], " ")
 		// Run a check to see if the object is an inventory
 		fmt.Printf("Looking inside %s\n\n", object)
-		return
 
 	// We're looking at something specific
 	default:
@@ -88,7 +87,6 @@ func (gs GameState) Look(args []string) {
 
 		object := strings.Join(args[startIndex:], " ")
 		fmt.Printf("We're examining a %s\n\n", object)
-		return
 	}
 }
 
