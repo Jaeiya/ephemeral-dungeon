@@ -66,10 +66,6 @@ func (d Direction) String() string {
 	}
 }
 
-type Dungeon struct {
-	Exits []BaseRoom
-}
-
 type BaseRoom struct {
 	location Direction
 	desc     string
@@ -81,7 +77,7 @@ type Room interface {
 	interact(obj string)
 }
 
-type World struct{}
+type Dungeon struct{}
 
 var (
 	roomDirections = []Direction{North, South, East, West}
@@ -92,11 +88,11 @@ var (
 // as rooms and hallways.
 //
 // 🔵 Hallways have a significantly lower chance of appearing
-func (w World) GenerateExits(lastDir Direction) (rooms, halls []Direction) {
-	return w.genRoomDirs(lastDir), w.genHallDirs(lastDir)
+func (d Dungeon) GenerateExits(lastDir Direction) (rooms, halls []Direction) {
+	return d.genRoomDirs(lastDir), d.genHallDirs(lastDir)
 }
 
-func (w World) genRoomDirs(lastDir Direction) []Direction {
+func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
 	rooms := utils.FilterSlice(
 		roomDirections,
 		func(d Direction) bool { return lastDir == d },
@@ -118,7 +114,7 @@ func (w World) genRoomDirs(lastDir Direction) []Direction {
 	return rooms[:roomLimit]
 }
 
-func (w World) genHallDirs(lastDir Direction) []Direction {
+func (d Dungeon) genHallDirs(lastDir Direction) []Direction {
 	if RollPercent(23) {
 		halls := utils.FilterSlice(
 			hallDirections,
