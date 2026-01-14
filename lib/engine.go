@@ -48,11 +48,11 @@ func NewGame() error {
 	return nil
 }
 
-func (g *GameState) ParseCommand(input string) bool {
+func (gs *GameState) ParseCommand(input string) bool {
 	inputParts := strings.Split(strings.ToLower(strings.TrimSpace(input)), " ")
 
 	if len(inputParts) > 0 {
-		if cmd, exists := g.cmdMap[inputParts[0]]; exists {
+		if cmd, exists := gs.cmdMap[inputParts[0]]; exists {
 			cmd(inputParts[1:])
 			return true
 		}
@@ -61,7 +61,7 @@ func (g *GameState) ParseCommand(input string) bool {
 	return false
 }
 
-func (g *GameState) Look(args []string) {
+func (gs GameState) Look(args []string) {
 	argLen := len(args)
 
 	if argLen == 0 {
@@ -73,7 +73,7 @@ func (g *GameState) Look(args []string) {
 	switch args[0] {
 
 	// We're looking inside of an inventory
-	case "in", "inside", "into":
+	case "in", "inside", "into", "within":
 		object := strings.Join(args[1:], " ")
 		// Run a check to see if the object is an inventory
 		fmt.Printf("Looking inside %s\n\n", object)
@@ -87,21 +87,21 @@ func (g *GameState) Look(args []string) {
 		}
 
 		object := strings.Join(args[startIndex:], " ")
-		fmt.Printf("We're examining %s\n\n", object)
+		fmt.Printf("We're examining a %s\n\n", object)
 		return
 	}
 }
 
-func (g *GameState) Examine(args []string) {
+func (gs GameState) Examine(args []string) {
 	if len(args) == 0 {
 		fmt.Printf("Nothing to examine\n\n")
 		return
 	}
-	g.Look(slices.Concat([]string{"at"}, args))
+	gs.Look(slices.Concat([]string{"at"}, args))
 }
 
-func (g GameState) Inventory(args []string) {
-	playerItems := g.player.inventory.Items
+func (gs GameState) Inventory(args []string) {
+	playerItems := gs.player.inventory.Items
 	if len(playerItems) == 0 {
 		fmt.Printf("Nothing in your inventory\n\n")
 		return
