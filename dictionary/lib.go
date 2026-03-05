@@ -20,7 +20,7 @@ const (
 	hashPass = "1337420"
 	// dictLength (BigEndian uint16) + Sha256 + \n
 	headerSize = 2 + 32 + 1
-	newLineIdx = 34
+	newLineIdx = headerSize - 1
 )
 
 var (
