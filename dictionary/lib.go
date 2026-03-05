@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"maps"
 	"os"
 	"slices"
 	"strings"
@@ -33,7 +34,9 @@ type FileInfo struct {
 	hash       []byte
 }
 
-var dictionary map[string]uint16
+var (
+	store map[string]uint16
+)
 
 func loadDict(f *os.File, fileSize int64) (map[string]uint16, bool) {
 	if fileSize == 0 {
@@ -146,14 +149,14 @@ func displayMenu(r *bufio.Reader, f *os.File) {
 
 		case 3:
 			input := strings.ToLower(utils.PromptInput("View Word", r))
-			wordID, exists := dictionary[input]
+			wordID, exists := store[input]
 			if !exists {
 				utils.PrintError(fmt.Errorf("could not find '%s'", input))
 				break
 			}
 
 			words := []string{}
-			for word, dID := range dictionary {
+			for word, dID := range store {
 				if dID == wordID && word != input {
 					words = append(words, word)
 				}
@@ -165,7 +168,7 @@ func displayMenu(r *bufio.Reader, f *os.File) {
 			}
 
 		case 4:
-			for key, val := range dictionary {
+			for key, val := range store {
 				fmt.Println(val, key)
 			}
 
@@ -192,14 +195,14 @@ func addWords(f *os.File, wordInput string) bool {
 	words := strings.Fields(wordInput)
 
 	for _, w := range words {
-		if _, exists := dictionary[w]; exists {
+		if _, exists := store[w]; exists {
 			return false
 		}
 	}
 
 	dictLength += 1
 	for _, w := range words {
-		dictionary[w] = dictLength
+		store[w] = dictLength
 	}
 
 	dataSize := 2 + len(wordInput) + 1
@@ -216,16 +219,54 @@ func save(f *os.File, data []byte) {
 	if _, err := w.Write(data); err != nil {
 		panic(fmt.Errorf("failed to save words::%w", err))
 	}
-	if err := createHeader(f, dictLength); err != nil {
+	if err := createHeader(f, hasher, dictLength); err != nil {
 		panic(fmt.Errorf("failed to save words::%w", err))
 	}
 }
 
-func createHeader(fh *os.File, length uint16) error {
+func saveAll() error {
+	lenBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(lenBytes, dictLength)
+
+	reverseDict := map[uint16][]string{}
+	for k, v := range store {
+		reverseDict[v] = append(reverseDict[v], k)
+	}
+
+	keys := slices.Sorted(maps.Keys(reverseDict))
+
+	buf := bytes.Buffer{}
+	idBytes := make([]byte, 2)
+	buf.Grow(len(store) * 10)
+
+	for _, k := range keys {
+		binary.BigEndian.PutUint16(idBytes, k)
+		buf.Write(idBytes)
+
+		v := reverseDict[k]
+		slices.Sort(v)
+		buf.WriteString(strings.Join(v, " "))
+		buf.WriteByte('\n')
+	}
+
+	h := hmac.New(sha256.New, []byte(hashPass))
+	h.Write(buf.Bytes())
+	hash := h.Sum(nil)
+
+	fileBuffer := bytes.Buffer{}
+	fileBuffer.Grow(2 + len(hash) + 1 + buf.Len())
+	fileBuffer.Write(lenBytes)
+	fileBuffer.Write(hash)
+	fileBuffer.WriteByte('\n')
+	fileBuffer.Write(buf.Bytes())
+	return nil
+}
+
+func createHeader(fh *os.File, h hash.Hash, length uint16) error {
 	fh.Seek(0, io.SeekStart)
 	var buf [headerSize]byte
 	binary.BigEndian.PutUint16(buf[:2], length)
-	copy(buf[2:], hasher.Sum(nil))
+	copy(buf[2:], h.Sum(nil))
 	buf[newLineIdx] = '\n'
 	if _, err := fh.Write(buf[:]); err != nil {
 		return fmt.Errorf("failed to create header::%w", err)
@@ -239,7 +280,7 @@ func createHeader(fh *os.File, length uint16) error {
 func appendWord(wordInput string) error {
 	words := strings.Fields(strings.ToLower(wordInput))
 
-	wordID, exists := dictionary[words[0]]
+	wordID, exists := store[words[0]]
 	if !exists {
 		return fmt.Errorf("first word must exist in dictionary to append to")
 	}
@@ -248,13 +289,16 @@ func appendWord(wordInput string) error {
 		return fmt.Errorf("missing words to append to '%s'", words[0])
 	}
 
-	for _, w := range words {
-		if _, exists := dictionary[w]; exists {
+	wordsToAppend := words[1:]
+
+	for _, w := range wordsToAppend {
+		if _, exists := store[w]; exists {
 			continue
 		}
-		dictionary[w] = uint16(wordID)
+		store[w] = uint16(wordID)
 	}
 
+	saveAll()
 	return nil
 }
 
