@@ -49,8 +49,9 @@ func NewDictionary(store DictStorage) (Dictionary, error) {
 		newHeader := make([]byte, 0, headerSize)
 		newHeader = binary.BigEndian.AppendUint16(newHeader, 0)
 
+		var hashBuf = [32]byte{}
 		h := hmac.New(sha256.New, hmacSalt)
-		newHash := h.Sum(nil)
+		newHash := h.Sum(hashBuf[:0])
 		newHeader = append(newHeader, newHash...)
 
 		newHeader = append(newHeader, '\n')
@@ -203,9 +204,10 @@ func (dict *Dictionary) save() error {
 		buf.WriteByte('\n')
 	}
 
+	var hashBuf = [32]byte{}
 	h := hmac.New(sha256.New, []byte(hmacSalt))
 	h.Write(buf.Bytes())
-	hash := h.Sum(nil)
+	hash := h.Sum(hashBuf[:0])
 
 	fileBuffer := bytes.Buffer{}
 	fileBuffer.Grow(2 + len(hash) + 1 + buf.Len())
@@ -217,7 +219,8 @@ func (dict *Dictionary) save() error {
 }
 
 func (dict Dictionary) isValidHash(data []byte) bool {
+	var hashBuf = [32]byte{}
 	h := hmac.New(sha256.New, hmacSalt)
 	h.Write(data)
-	return slices.Compare(dict.hash, h.Sum(nil)) == 0
+	return bytes.Equal(dict.hash, h.Sum(hashBuf[:0]))
 }
