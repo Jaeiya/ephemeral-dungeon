@@ -1,235 +1,179 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"hash"
-	"io"
 	"maps"
-	"os"
 	"slices"
 	"strings"
-
-	"github.com/jaeiya/monster/dictionary/utils"
 )
 
 const (
-	hashPass = "1337420"
 	// dictLength (BigEndian uint16) + Sha256 + \n
 	headerSize = 2 + 32 + 1
 	newLineIdx = headerSize - 1
 )
 
 var (
-	hasher     hash.Hash = hmac.New(sha256.New, []byte(hashPass))
-	dictLength uint16    = 0
+	hmacSalt = []byte("1337420")
 )
+
+type DictStorage interface {
+	ReadAll() ([]byte, error)
+	Save(data []byte) error
+}
 
 type FileInfo struct {
 	dictLength uint16
 	hash       []byte
 }
 
-var (
-	store map[string]uint16
-)
-
-func loadDict(f *os.File, fileSize int64) (map[string]uint16, bool) {
-	if fileSize == 0 {
-		return nil, false
-	}
-
-	fileReader := bufio.NewReader(f)
-
-	fileInfo, err := readHeader(fileSize, fileReader)
-	if err != nil {
-		panic(fmt.Errorf("failed to read header::%w", err))
-	}
-
-	tee := io.TeeReader(fileReader, hasher)
-
-	dictLength = fileInfo.dictLength
-	dict := make(map[string]uint16, dictLength)
-	r := bufio.NewReader(tee)
-
-	for range dictLength {
-		idBytes := [2]byte{}
-		io.ReadFull(r, idBytes[:])
-		id := binary.BigEndian.Uint16(idBytes[:])
-		wordPack, err := r.ReadString('\n')
-		if err != nil {
-			panic(fmt.Errorf("failed to load dict::%w", err))
-		}
-		wordPack = strings.TrimSpace(wordPack)
-		if strings.Contains(wordPack, " ") {
-			for w := range strings.FieldsSeq(wordPack) {
-				dict[w] = id
-			}
-		} else {
-			dict[wordPack] = id
-		}
-	}
-
-	if !bytes.Equal(hasher.Sum(nil), fileInfo.hash) {
-		panic(fmt.Errorf("dictionary integrity compromised"))
-	}
-
-	return dict, true
+type Dictionary struct {
+	wordMap map[string]uint16
+	length  uint16
+	store   DictStorage
+	hash    []byte
 }
 
-func readHeader(fileSize int64, r *bufio.Reader) (FileInfo, error) {
-	fi := FileInfo{}
-
-	if fileSize < headerSize {
-		return fi, fmt.Errorf("corrupted or invalid dictionary header")
-	}
-
-	header := make([]byte, headerSize)
-	_, err := io.ReadFull(r, header)
+func NewDictionary(store DictStorage) (Dictionary, error) {
+	fileData, err := store.ReadAll()
 	if err != nil {
-		return fi, fmt.Errorf("failed to read header::%w", err)
+		return Dictionary{}, fmt.Errorf("error reading file::%w", err)
 	}
+
+	if len(fileData) == 0 {
+		dict := Dictionary{}
+		newHeader := make([]byte, 0, headerSize)
+		newHeader = binary.BigEndian.AppendUint16(newHeader, 0)
+
+		h := hmac.New(sha256.New, hmacSalt)
+		newHash := h.Sum(nil)
+		newHeader = append(newHeader, newHash...)
+
+		newHeader = append(newHeader, '\n')
+
+		if err := store.Save(newHeader); err != nil {
+			return dict, fmt.Errorf("failed to save new dictionary::%w", err)
+		}
+
+		dict.length = 0
+		dict.hash = newHash
+		dict.store = store
+		return dict, nil
+	}
+
+	header := fileData[:headerSize]
+	content := fileData[headerSize:]
 
 	if header[newLineIdx] != '\n' {
-		return fi, fmt.Errorf("missing line-termination char")
+		return Dictionary{}, fmt.Errorf("invalid header::missing termination")
 	}
 
-	fi.dictLength = binary.BigEndian.Uint16(header[0:2])
-	fi.hash = slices.Clone(header[2:newLineIdx])
-
-	return fi, nil
-}
-
-func displayMenu(r *bufio.Reader, f *os.File) {
-	for {
-		choice, err := utils.PromptMenu(utils.MenuOptions{
-			Title: "Dictionary Config",
-			Items: []string{
-				"Add Word",
-				"Append Word",
-				"View Word",
-				"View All",
-			},
-			SoftExit: true,
-		}, r)
-		if err != nil {
-			utils.PrintError(err)
-			utils.PromptBackToMenu(r)
-			continue
-		}
-
-		switch choice {
-		case 1:
-			input := strings.ToLower(utils.PromptInput("Add Word", r))
-
-			if !isValidInput(input) {
-				utils.PrintError(fmt.Errorf("'%s' is not a valid word string", input))
-				break
-			}
-
-			if len(input) == 0 {
-				utils.PrintError(fmt.Errorf("empty input not allowed"))
-				break
-			}
-
-			if !addWords(f, input) {
-				utils.PrintError(fmt.Errorf("one or all of '%s' already exists", input))
-			}
-
-		case 2:
-			input := strings.ToLower(utils.PromptInput("Append Words", r))
-			err := appendWord(input)
-			if err != nil {
-				utils.PrintError(err)
-			}
-
-		case 3:
-			input := strings.ToLower(utils.PromptInput("View Word", r))
-			wordID, exists := store[input]
-			if !exists {
-				utils.PrintError(fmt.Errorf("could not find '%s'", input))
-				break
-			}
-
-			words := []string{}
-			for word, dID := range store {
-				if dID == wordID && word != input {
-					words = append(words, word)
-				}
-			}
-
-			fmt.Printf("\n %d %s\n", wordID, input)
-			for _, w := range words {
-				fmt.Printf(" %d %s\n", wordID, w)
-			}
-
-		case 4:
-			for key, val := range store {
-				fmt.Println(val, key)
-			}
-
-		case 5:
-			return
-		}
-
-		utils.PromptBackToMenu(r)
+	dict := Dictionary{
+		length:  binary.BigEndian.Uint16(header[0:2]),
+		hash:    header[2:newLineIdx],
+		wordMap: map[string]uint16{},
+		store:   store,
 	}
-}
 
-// isValidInput returns false for all non-lowercase english letters or spaces
-func isValidInput(input string) bool {
-	for _, r := range input {
-		if r != 32 && (r < 97 || r > 122) {
-			return false
+	if !dict.isValidHash(content) {
+		return Dictionary{}, fmt.Errorf("data integrity check failed")
+	}
+
+	for data := range bytes.SplitSeq(content, []byte{'\n'}) {
+		if len(data) > 0 {
+			id := binary.BigEndian.Uint16(data[:2])
+			for word := range strings.SplitSeq(string(data[2:]), " ") {
+				dict.wordMap[word] = id
+			}
 		}
 	}
-	return true
+
+	return dict, nil
 }
 
-// addWords adds all words as synonyms of each other
-func addWords(f *os.File, wordInput string) bool {
+// AddWords splits the wordInput by space character into a word
+// slice and adds them all as a single dictionary entry, where
+// they all reference the same ID.
+//
+// 🟡 Returns false if any words in the wordInput already exist
+// in the dictionary.
+func (dict *Dictionary) AddWords(wordInput string) (bool, error) {
 	words := strings.Fields(wordInput)
 
 	for _, w := range words {
-		if _, exists := store[w]; exists {
-			return false
+		if _, exists := dict.wordMap[w]; exists {
+			return false, nil
 		}
 	}
 
-	dictLength += 1
+	dict.length += 1
 	for _, w := range words {
-		store[w] = dictLength
+		dict.wordMap[w] = dict.length
 	}
 
-	dataSize := 2 + len(wordInput) + 1
-	data := make([]byte, dataSize)
-	binary.BigEndian.PutUint16(data[:2], dictLength)
-	copy(data[2:], wordInput)
-	data[dataSize-1] = '\n'
-	save(f, data)
-	return true
+	if err := dict.save(); err != nil {
+		return false, fmt.Errorf("failed to save words::%w", err)
+	}
+
+	return true, nil
 }
 
-func save(f *os.File, data []byte) {
-	w := io.MultiWriter(f, hasher)
-	if _, err := w.Write(data); err != nil {
-		panic(fmt.Errorf("failed to save words::%w", err))
+// AppendWord splits the wordInput by space character into a word
+// slice. All words found after the first, are appended to the
+// id of the first.
+//
+// 🟠 If the first word does not exist in the dictionary, an
+// error will be thrown.
+//
+// 🟡 Returns false if any of the words to append, already
+// exist in the dictionary.
+func (dict Dictionary) AppendWord(wordInput string) (bool, error) {
+	words := strings.Fields(strings.ToLower(wordInput))
+
+	wordID, exists := dict.wordMap[words[0]]
+	if !exists {
+		return false, fmt.Errorf("first word must exist in dictionary to append to")
 	}
-	if err := createHeader(f, hasher, dictLength); err != nil {
-		panic(fmt.Errorf("failed to save words::%w", err))
+
+	if len(words) < 2 {
+		return false, fmt.Errorf("missing words to append to '%s'", words[0])
 	}
+
+	wordsToAppend := words[1:]
+
+	for _, w := range wordsToAppend {
+		if _, exists := dict.wordMap[w]; exists {
+			return false, nil
+		}
+		dict.wordMap[w] = uint16(wordID)
+	}
+
+	if err := dict.save(); err != nil {
+		return false, fmt.Errorf("failed to save appended words::%w", err)
+	}
+
+	return true, nil
 }
 
-func saveAll() error {
+func (dict *Dictionary) save() error {
 	lenBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(lenBytes, dictLength)
+	binary.BigEndian.PutUint16(lenBytes, dict.length)
+
+	if len(dict.wordMap) == 0 {
+		fileBuffer := bytes.Buffer{}
+		fileBuffer.Grow(headerSize)
+		fileBuffer.Write(lenBytes)
+		fileBuffer.Write(dict.hash)
+		fileBuffer.WriteByte('\n')
+		return dict.store.Save(fileBuffer.Bytes())
+	}
 
 	reverseDict := map[uint16][]string{}
-	for k, v := range store {
+	for k, v := range dict.wordMap {
 		reverseDict[v] = append(reverseDict[v], k)
 	}
 
@@ -237,7 +181,7 @@ func saveAll() error {
 
 	buf := bytes.Buffer{}
 	idBytes := make([]byte, 2)
-	buf.Grow(len(store) * 10)
+	buf.Grow(len(dict.wordMap) * 10)
 
 	for _, k := range keys {
 		binary.BigEndian.PutUint16(idBytes, k)
@@ -249,7 +193,7 @@ func saveAll() error {
 		buf.WriteByte('\n')
 	}
 
-	h := hmac.New(sha256.New, []byte(hashPass))
+	h := hmac.New(sha256.New, []byte(hmacSalt))
 	h.Write(buf.Bytes())
 	hash := h.Sum(nil)
 
@@ -259,48 +203,11 @@ func saveAll() error {
 	fileBuffer.Write(hash)
 	fileBuffer.WriteByte('\n')
 	fileBuffer.Write(buf.Bytes())
-	return nil
+	return dict.store.Save(fileBuffer.Bytes())
 }
 
-func createHeader(fh *os.File, h hash.Hash, length uint16) error {
-	fh.Seek(0, io.SeekStart)
-	var buf [headerSize]byte
-	binary.BigEndian.PutUint16(buf[:2], length)
-	copy(buf[2:], h.Sum(nil))
-	buf[newLineIdx] = '\n'
-	if _, err := fh.Write(buf[:]); err != nil {
-		return fmt.Errorf("failed to create header::%w", err)
-	}
-	fh.Seek(0, io.SeekEnd)
-	return nil
-}
-
-// appendWord appends the specified 'words' to the existing
-// specified 'word'
-func appendWord(wordInput string) error {
-	words := strings.Fields(strings.ToLower(wordInput))
-
-	wordID, exists := store[words[0]]
-	if !exists {
-		return fmt.Errorf("first word must exist in dictionary to append to")
-	}
-
-	if len(words) < 2 {
-		return fmt.Errorf("missing words to append to '%s'", words[0])
-	}
-
-	wordsToAppend := words[1:]
-
-	for _, w := range wordsToAppend {
-		if _, exists := store[w]; exists {
-			continue
-		}
-		store[w] = uint16(wordID)
-	}
-
-	saveAll()
-	return nil
-}
-
-func deleteWord() {
+func (dict Dictionary) isValidHash(data []byte) bool {
+	h := hmac.New(sha256.New, hmacSalt)
+	h.Write(data)
+	return slices.Compare(dict.hash, h.Sum(nil)) == 0
 }
