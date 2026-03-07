@@ -159,6 +159,15 @@ func (dict Dictionary) AppendWord(wordInput string) (bool, error) {
 	return true, nil
 }
 
+// save writes a header and dictionary data through the
+// storage interface.
+//
+// 🔵 The header is made up of a BigEndian uint16
+// dictionary length and a SHA-256 hash of the
+// dictionary data.
+//
+// 🔵 The hash is used to check for data corruption
+// or tampering.
 func (dict *Dictionary) save() error {
 	lenBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(lenBytes, dict.length)
@@ -177,6 +186,7 @@ func (dict *Dictionary) save() error {
 		reverseDict[v] = append(reverseDict[v], k)
 	}
 
+	// Force sequential order of lines in file
 	keys := slices.Sorted(maps.Keys(reverseDict))
 
 	buf := bytes.Buffer{}
@@ -188,7 +198,7 @@ func (dict *Dictionary) save() error {
 		buf.Write(idBytes)
 
 		v := reverseDict[k]
-		slices.Sort(v)
+		slices.Sort(v) // Force alphabetical order of synonyms
 		buf.WriteString(strings.Join(v, " "))
 		buf.WriteByte('\n')
 	}
