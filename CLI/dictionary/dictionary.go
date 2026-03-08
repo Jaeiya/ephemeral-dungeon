@@ -38,14 +38,14 @@ type Dictionary struct {
 	hash    []byte
 }
 
-func NewDictionary(store DictStorage) (Dictionary, error) {
+func NewDictionary(store DictStorage) (*Dictionary, error) {
 	fileData, err := store.ReadAll()
 	if err != nil {
-		return Dictionary{}, fmt.Errorf("error reading file::%w", err)
+		return &Dictionary{}, fmt.Errorf("error reading file::%w", err)
 	}
 
 	if len(fileData) == 0 {
-		dict := Dictionary{}
+		dict := &Dictionary{}
 		newHeader := make([]byte, 0, headerSize)
 		newHeader = binary.BigEndian.AppendUint16(newHeader, 0)
 
@@ -63,6 +63,7 @@ func NewDictionary(store DictStorage) (Dictionary, error) {
 		dict.length = 0
 		dict.hash = newHash
 		dict.store = store
+		dict.wordMap = map[string]uint16{}
 		return dict, nil
 	}
 
@@ -70,10 +71,10 @@ func NewDictionary(store DictStorage) (Dictionary, error) {
 	content := fileData[headerSize:]
 
 	if header[newLineIdx] != '\n' {
-		return Dictionary{}, fmt.Errorf("invalid header::missing termination")
+		return &Dictionary{}, fmt.Errorf("invalid header::missing termination")
 	}
 
-	dict := Dictionary{
+	dict := &Dictionary{
 		length:  binary.BigEndian.Uint16(header[0:2]),
 		hash:    header[2:newLineIdx],
 		wordMap: map[string]uint16{},
@@ -81,7 +82,7 @@ func NewDictionary(store DictStorage) (Dictionary, error) {
 	}
 
 	if !dict.isValidHash(content) {
-		return Dictionary{}, fmt.Errorf("data integrity check failed")
+		return &Dictionary{}, fmt.Errorf("data integrity check failed")
 	}
 
 	for data := range bytes.SplitSeq(content, []byte{'\n'}) {
@@ -132,7 +133,7 @@ func (dict *Dictionary) AddWords(wordInput string) (bool, error) {
 //
 // 🟡 Returns false if any of the words to append, already
 // exist in the dictionary.
-func (dict Dictionary) AppendWord(wordInput string) (bool, error) {
+func (dict *Dictionary) AppendWord(wordInput string) (bool, error) {
 	words := strings.Fields(strings.ToLower(wordInput))
 
 	wordID, exists := dict.wordMap[words[0]]
@@ -218,7 +219,7 @@ func (dict *Dictionary) save() error {
 	return dict.store.Save(fileBuffer.Bytes())
 }
 
-func (dict Dictionary) isValidHash(data []byte) bool {
+func (dict *Dictionary) isValidHash(data []byte) bool {
 	var hashBuf = [32]byte{}
 	h := hmac.New(sha256.New, hmacSalt)
 	h.Write(data)

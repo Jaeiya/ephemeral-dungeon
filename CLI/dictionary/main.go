@@ -2,19 +2,17 @@ package main
 
 import (
 	"bufio"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
-	"github.com/jaeiya/monster/dictionary/utils"
+	"github.com/jaeiya/monster/CLI/shared"
 )
 
 const filePath = "./dictionary.db"
 
-type FileStorage struct {
-}
+type FileStorage struct{}
 
 func (fs FileStorage) Save(b []byte) error {
 	fh, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0o644)
@@ -41,9 +39,9 @@ func (fs FileStorage) ReadAll() ([]byte, error) {
 	return io.ReadAll(fh)
 }
 
-func displayMenu(r *bufio.Reader, dict Dictionary) {
+func displayMenu(r *bufio.Reader, dict *Dictionary) {
 	for {
-		choice, err := utils.PromptMenu(utils.MenuOptions{
+		choice, err := shared.PromptMenu(shared.MenuOptions{
 			Title: "Dictionary Config",
 			Items: []string{
 				"Add Word",
@@ -54,49 +52,48 @@ func displayMenu(r *bufio.Reader, dict Dictionary) {
 			SoftExit: true,
 		}, r)
 		if err != nil {
-			utils.PrintError(err)
-			utils.PromptBackToMenu(r)
+			shared.PrintError(err)
+			shared.PromptBackToMenu(r)
 			continue
 		}
 
 		switch choice {
 		case 1:
-			input := strings.ToLower(utils.PromptInput("Add Word", r))
+			input := strings.ToLower(shared.PromptInput("Add Word", r))
 
 			if !isValidInput(input) {
-				utils.PrintError(fmt.Errorf("'%s' is not a valid word string", input))
+				shared.PrintError(fmt.Errorf("'%s' is not a valid word string", input))
 				break
 			}
 
 			if len(input) == 0 {
-				utils.PrintError(fmt.Errorf("empty input not allowed"))
+				shared.PrintError(fmt.Errorf("empty input not allowed"))
 				break
 			}
 
 			success, err := dict.AddWords(input)
 			if err != nil {
-				utils.PrintError(err)
+				shared.PrintError(err)
 			} else if !success {
-				utils.PrintError(fmt.Errorf("one or all of '%s' already exists", input))
+				shared.PrintError(fmt.Errorf("one or all of '%s' already exists", input))
 			}
 
 		case 2:
-			input := strings.ToLower(utils.PromptInput("Append Words", r))
+			input := strings.ToLower(shared.PromptInput("Append Words", r))
 			success, err := dict.AppendWord(input)
 			if err != nil {
-				utils.PrintError(err)
-			}
-			if !success {
-				utils.PrintError(
+				shared.PrintError(err)
+			} else if !success {
+				shared.PrintError(
 					fmt.Errorf("one or more of the words to append already exists"),
 				)
 			}
 
 		case 3:
-			input := strings.ToLower(utils.PromptInput("View Word", r))
+			input := strings.ToLower(shared.PromptInput("View Word", r))
 			wordID, exists := dict.wordMap[input]
 			if !exists {
-				utils.PrintError(fmt.Errorf("could not find '%s'", input))
+				shared.PrintError(fmt.Errorf("could not find '%s'", input))
 				break
 			}
 
@@ -121,7 +118,7 @@ func displayMenu(r *bufio.Reader, dict Dictionary) {
 			return
 		}
 
-		utils.PromptBackToMenu(r)
+		shared.PromptBackToMenu(r)
 	}
 }
 
@@ -141,39 +138,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("%s\n%+v\n%+v\n", hex.EncodeToString(dict.hash), dict.length, dict.wordMap)
-	success, err := dict.AppendWord("stone rock")
-	if err != nil {
-		panic(err)
-	}
+	r := bufio.NewReader(os.Stdin)
+	displayMenu(r, dict)
 
-	if !success {
-		panic("tried to add a word that already exists")
-	}
-
-	fmt.Println(dict.wordMap)
-
-	// var err error
-
-	// fh, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0o644)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer fh.Close()
-
-	// fileStats, err := fh.Stat()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// var isLoaded bool
-
-	// if store, isLoaded = loadDict(fh, fileStats.Size()); !isLoaded {
-	// 	// Write new dictionary file header
-	// 	createHeader(fh, hasher, dictLength)
-	// 	store = map[string]uint16{}
-	// }
-
-	// r := bufio.NewReader(os.Stdin)
-	// displayMenu(r, fh)
 }
