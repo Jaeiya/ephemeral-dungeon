@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"maps"
 	"slices"
 	"strings"
@@ -17,6 +19,7 @@ const (
 )
 
 type DictStorage interface {
+	NewWriter() (io.WriteCloser, error)
 	ReadAll() ([]byte, error)
 	Save(data []byte) error
 }
@@ -34,16 +37,12 @@ func NewDictionary(store DictStorage) (*Dictionary, error) {
 		return &Dictionary{}, fmt.Errorf("error reading file::%w", err)
 	}
 
+	// Initialize empty store with default header
 	if len(fileData) == 0 {
 		dict := &Dictionary{}
-		newHeader := make([]byte, 0, headerSize)
-		newHeader = binary.BigEndian.AppendUint16(newHeader, 0)
+		fileBuf, checksum := dict.createHeader(0, nil)
 
-		checksum := crc32.ChecksumIEEE([]byte{})
-		binary.BigEndian.AppendUint32(newHeader, checksum)
-		newHeader = append(newHeader, '\n')
-
-		if err := store.Save(newHeader); err != nil {
+		if err := store.Save(fileBuf); err != nil {
 			return dict, fmt.Errorf("failed to save new dictionary::%w", err)
 		}
 
@@ -155,24 +154,15 @@ func (dict *Dictionary) AppendWord(wordInput string) (bool, error) {
 // storage interface.
 //
 // 🔵 The header is made up of a BigEndian uint16
-// dictionary length and a SHA-256 hash of the
+// dictionary length and a CRC32 of the
 // dictionary data.
 //
-// 🔵 The hash is used to check for data corruption
+// 🔵 The CRC32 is used to check for data corruption
 // or tampering.
 func (dict *Dictionary) save() error {
-	lenBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(lenBytes, dict.length)
-
 	if len(dict.wordMap) == 0 {
-		buf := [headerSize]byte{}
-
-		bufSlice := buf[:0]
-		bufSlice = binary.BigEndian.AppendUint16(bufSlice, 0)
-		bufSlice = binary.BigEndian.AppendUint32(bufSlice, crc32.ChecksumIEEE(nil))
-		bufSlice = append(bufSlice, '\n')
-
-		return dict.store.Save(bufSlice)
+		fileBuf, _ := dict.createHeader(0, nil)
+		return dict.store.Save(fileBuf)
 	}
 
 	reverseDict := map[uint16][]string{}
@@ -197,15 +187,30 @@ func (dict *Dictionary) save() error {
 		buf.WriteByte('\n')
 	}
 
-	bufSize := headerSize + buf.Len()
-	fileBuf := make([]byte, 0, bufSize)
+	data := buf.Bytes()
+	header, _ := dict.createHeader(dict.length, data)
 
-	fileBuf = binary.BigEndian.AppendUint16(fileBuf, dict.length)
-	fileBuf = binary.BigEndian.AppendUint32(fileBuf, crc32.ChecksumIEEE(buf.Bytes()))
-	fileBuf = append(fileBuf, '\n')
-	fileBuf = append(fileBuf, buf.Bytes()...)
+	w, err := dict.store.NewWriter()
+	if err != nil {
+		return err
+	}
+	defer w.Close()
 
-	return dict.store.Save(fileBuf)
+	bw := bufio.NewWriter(w)
+	bw.Write(header)
+	bw.Write(data)
+	return bw.Flush()
+}
+
+func (dict *Dictionary) createHeader(length uint16, data []byte) ([]byte, uint32) {
+	checksum := crc32.ChecksumIEEE(data)
+
+	header := make([]byte, 0, headerSize)
+	header = binary.BigEndian.AppendUint16(header, length)
+	header = binary.BigEndian.AppendUint32(header, checksum)
+	header = append(header, '\n')
+
+	return header, checksum
 }
 
 func (dict *Dictionary) isValidHash(data []byte) bool {

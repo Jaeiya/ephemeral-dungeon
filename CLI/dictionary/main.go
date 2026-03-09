@@ -39,6 +39,10 @@ func (fs FileStorage) ReadAll() ([]byte, error) {
 	return io.ReadAll(fh)
 }
 
+func (fs FileStorage) NewWriter() (io.WriteCloser, error) {
+	return os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+}
+
 func displayMenu(r *bufio.Reader, dict *Dictionary) {
 	for {
 		choice, err := shared.PromptMenu(shared.MenuOptions{
