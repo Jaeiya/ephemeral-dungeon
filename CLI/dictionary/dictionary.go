@@ -91,7 +91,7 @@ func NewDictionary(store DictStorage) (*Dictionary, error) {
 // 🟡 Returns false if any words in the wordInput already exist
 // in the dictionary.
 func (dict *Dictionary) AddWords(wordInput string) (bool, error) {
-	words := strings.Fields(wordInput)
+	words := strings.Fields(strings.ToLower(wordInput))
 
 	for _, w := range words {
 		if _, exists := dict.wordMap[w]; exists {
@@ -138,6 +138,9 @@ func (dict *Dictionary) AppendWord(wordInput string) (bool, error) {
 		if _, exists := dict.wordMap[w]; exists {
 			return false, nil
 		}
+	}
+
+	for _, w := range wordsToAppend {
 		dict.wordMap[w] = uint16(wordID)
 	}
 
