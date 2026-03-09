@@ -16,10 +16,6 @@ const (
 	newLineIdx = headerSize - 1
 )
 
-var (
-	hmacSalt = []byte("1337420")
-)
-
 type DictStorage interface {
 	ReadAll() ([]byte, error)
 	Save(data []byte) error
