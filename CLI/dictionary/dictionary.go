@@ -21,16 +21,11 @@ type DictStorage interface {
 	Save(data []byte) error
 }
 
-type FileInfo struct {
-	dictLength uint16
-	hash       []byte
-}
-
 type Dictionary struct {
-	wordMap  map[string]uint16
-	length   uint16
 	store    DictStorage
+	wordMap  map[string]uint16
 	checksum uint32
+	length   uint16
 }
 
 func NewDictionary(store DictStorage) (*Dictionary, error) {
