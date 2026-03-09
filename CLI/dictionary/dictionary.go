@@ -2,18 +2,17 @@ package main
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"hash/crc32"
 	"maps"
 	"slices"
 	"strings"
 )
 
 const (
-	// dictLength (BigEndian uint16) + Sha256 + \n
-	headerSize = 2 + 32 + 1
+	// dictLength (BigEndian uint16) + CRC32 + \n
+	headerSize = 2 + 4 + 1
 	newLineIdx = headerSize - 1
 )
 
@@ -32,10 +31,10 @@ type FileInfo struct {
 }
 
 type Dictionary struct {
-	wordMap map[string]uint16
-	length  uint16
-	store   DictStorage
-	hash    []byte
+	wordMap  map[string]uint16
+	length   uint16
+	store    DictStorage
+	checksum uint32
 }
 
 func NewDictionary(store DictStorage) (*Dictionary, error) {
@@ -49,11 +48,8 @@ func NewDictionary(store DictStorage) (*Dictionary, error) {
 		newHeader := make([]byte, 0, headerSize)
 		newHeader = binary.BigEndian.AppendUint16(newHeader, 0)
 
-		var hashBuf = [32]byte{}
-		h := hmac.New(sha256.New, hmacSalt)
-		newHash := h.Sum(hashBuf[:0])
-		newHeader = append(newHeader, newHash...)
-
+		checksum := crc32.ChecksumIEEE([]byte{})
+		binary.BigEndian.AppendUint32(newHeader, checksum)
 		newHeader = append(newHeader, '\n')
 
 		if err := store.Save(newHeader); err != nil {
@@ -61,7 +57,7 @@ func NewDictionary(store DictStorage) (*Dictionary, error) {
 		}
 
 		dict.length = 0
-		dict.hash = newHash
+		dict.checksum = checksum
 		dict.store = store
 		dict.wordMap = map[string]uint16{}
 		return dict, nil
@@ -75,10 +71,10 @@ func NewDictionary(store DictStorage) (*Dictionary, error) {
 	}
 
 	dict := &Dictionary{
-		length:  binary.BigEndian.Uint16(header[0:2]),
-		hash:    header[2:newLineIdx],
-		wordMap: map[string]uint16{},
-		store:   store,
+		length:   binary.BigEndian.Uint16(header[0:2]),
+		checksum: binary.BigEndian.Uint32(header[2:newLineIdx]),
+		wordMap:  map[string]uint16{},
+		store:    store,
 	}
 
 	if !dict.isValidHash(content) {
@@ -175,12 +171,14 @@ func (dict *Dictionary) save() error {
 	binary.BigEndian.PutUint16(lenBytes, dict.length)
 
 	if len(dict.wordMap) == 0 {
-		fileBuffer := bytes.Buffer{}
-		fileBuffer.Grow(headerSize)
-		fileBuffer.Write(lenBytes)
-		fileBuffer.Write(dict.hash)
-		fileBuffer.WriteByte('\n')
-		return dict.store.Save(fileBuffer.Bytes())
+		buf := [headerSize]byte{}
+
+		bufSlice := buf[:0]
+		bufSlice = binary.BigEndian.AppendUint16(bufSlice, 0)
+		bufSlice = binary.BigEndian.AppendUint32(bufSlice, crc32.ChecksumIEEE(nil))
+		bufSlice = append(bufSlice, '\n')
+
+		return dict.store.Save(bufSlice)
 	}
 
 	reverseDict := map[uint16][]string{}
@@ -205,23 +203,17 @@ func (dict *Dictionary) save() error {
 		buf.WriteByte('\n')
 	}
 
-	var hashBuf = [32]byte{}
-	h := hmac.New(sha256.New, []byte(hmacSalt))
-	h.Write(buf.Bytes())
-	hash := h.Sum(hashBuf[:0])
+	bufSize := headerSize + buf.Len()
+	fileBuf := make([]byte, 0, bufSize)
 
-	fileBuffer := bytes.Buffer{}
-	fileBuffer.Grow(2 + len(hash) + 1 + buf.Len())
-	fileBuffer.Write(lenBytes)
-	fileBuffer.Write(hash)
-	fileBuffer.WriteByte('\n')
-	fileBuffer.Write(buf.Bytes())
-	return dict.store.Save(fileBuffer.Bytes())
+	fileBuf = binary.BigEndian.AppendUint16(fileBuf, dict.length)
+	fileBuf = binary.BigEndian.AppendUint32(fileBuf, crc32.ChecksumIEEE(buf.Bytes()))
+	fileBuf = append(fileBuf, '\n')
+	fileBuf = append(fileBuf, buf.Bytes()...)
+
+	return dict.store.Save(fileBuf)
 }
 
 func (dict *Dictionary) isValidHash(data []byte) bool {
-	var hashBuf = [32]byte{}
-	h := hmac.New(sha256.New, hmacSalt)
-	h.Write(data)
-	return bytes.Equal(dict.hash, h.Sum(hashBuf[:0]))
+	return dict.checksum == crc32.ChecksumIEEE(data)
 }
