@@ -28,66 +28,90 @@ func DisplayMenu(r *bufio.Reader, dict *Dictionary) {
 
 		switch choice {
 		case 1:
-			input := strings.ToLower(shared.PromptInput("Add Word", r))
-
-			if !isValidInput(input) {
-				shared.PrintError(fmt.Errorf("'%s' is not a valid word string", input))
-				break
-			}
-
-			if len(input) == 0 {
-				shared.PrintError(fmt.Errorf("empty input not allowed"))
-				break
-			}
-
-			success, err := dict.AddWords(input)
-			if err != nil {
+			if err := promptAddWord(r, dict); err != nil {
 				shared.PrintError(err)
-			} else if !success {
-				shared.PrintError(fmt.Errorf("one or all of '%s' already exists", input))
 			}
 
 		case 2:
-			input := strings.ToLower(shared.PromptInput("Append Words", r))
-			success, err := dict.AppendWord(input)
-			if err != nil {
+			if err := promptAppendWord(r, dict); err != nil {
 				shared.PrintError(err)
-			} else if !success {
-				shared.PrintError(
-					fmt.Errorf("one or more of the words to append already exists"),
-				)
 			}
 
 		case 3:
-			input := strings.ToLower(shared.PromptInput("View Word", r))
-			wordID, exists := dict.wordMap[input]
-			if !exists {
-				shared.PrintError(fmt.Errorf("could not find '%s'", input))
-				break
-			}
-
-			words := []string{}
-			for word, dID := range dict.wordMap {
-				if dID == wordID && word != input {
-					words = append(words, word)
-				}
-			}
-
-			fmt.Printf("\n %d %s\n", wordID, input)
-			for _, w := range words {
-				fmt.Printf(" %d %s\n", wordID, w)
+			if err := printWord(r, dict); err != nil {
+				shared.PrintError(err)
 			}
 
 		case 4:
-			for key, val := range dict.wordMap {
-				fmt.Println(val, key)
-			}
+			viewWordMap(dict)
 
 		case 5:
 			return
 		}
 
 		shared.PromptBackToMenu(r)
+	}
+}
+
+func promptAddWord(r *bufio.Reader, dict *Dictionary) error {
+	input := strings.ToLower(shared.PromptInput("Add Word", r))
+
+	if !isValidInput(input) {
+		return fmt.Errorf("'%s' is not a valid word string", input)
+	}
+
+	if len(input) == 0 {
+		return fmt.Errorf("empty input not allowed")
+	}
+
+	success, err := dict.AddWords(input)
+	if err != nil {
+		return err
+	} else if !success {
+		return fmt.Errorf("one or all of '%s' already exists", input)
+	}
+
+	return nil
+}
+
+func promptAppendWord(r *bufio.Reader, dict *Dictionary) error {
+	input := strings.ToLower(shared.PromptInput("Append Words", r))
+	success, err := dict.AppendWord(input)
+
+	if err != nil {
+		return err
+	} else if !success {
+		return fmt.Errorf("one or more of the words to append already exists")
+	}
+
+	return nil
+}
+
+func printWord(r *bufio.Reader, dict *Dictionary) error {
+	input := strings.ToLower(shared.PromptInput("View Word", r))
+	wordID, exists := dict.wordMap[input]
+	if !exists {
+		return fmt.Errorf("could not find '%s'", input)
+	}
+
+	words := []string{}
+	for word, dID := range dict.wordMap {
+		if dID == wordID && word != input {
+			words = append(words, word)
+		}
+	}
+
+	fmt.Printf("\n %d %s\n", wordID, input)
+	for _, w := range words {
+		fmt.Printf(" %d %s\n", wordID, w)
+	}
+
+	return nil
+}
+
+func viewWordMap(dict *Dictionary) {
+	for key, val := range dict.wordMap {
+		fmt.Println(val, key)
 	}
 }
 
