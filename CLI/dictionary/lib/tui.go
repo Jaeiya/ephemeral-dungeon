@@ -2,7 +2,9 @@ package lib
 
 import (
 	"bufio"
+	"cmp"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/jaeiya/monster/CLI/shared"
@@ -110,8 +112,23 @@ func printWord(r *bufio.Reader, dict *Dictionary) error {
 }
 
 func viewWordMap(dict *Dictionary) {
-	for key, val := range dict.wordMap {
-		fmt.Println(val, key)
+	type entry struct {
+		word string
+		id   uint16
+	}
+
+	items := make([]entry, 0, len(dict.wordMap))
+	for k, v := range dict.wordMap {
+		items = append(items, entry{k, v})
+	}
+
+	slices.SortFunc(items, func(a, b entry) int {
+		return cmp.Compare(a.id, b.id)
+	})
+
+	fmt.Println()
+	for _, item := range items {
+		fmt.Printf("    %d %s\n", item.id, item.word)
 	}
 }
 
