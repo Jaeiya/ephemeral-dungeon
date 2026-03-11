@@ -10,7 +10,11 @@ import (
 	"github.com/jaeiya/monster/CLI/shared"
 )
 
-func DisplayMenu(r *bufio.Reader, dict *Dictionary) {
+func DisplayMenu(r *bufio.Reader, dict *Dictionary) error {
+	if dict == nil {
+		return fmt.Errorf("dictionary not initialized")
+	}
+
 	for {
 		choice, err := shared.PromptMenu(shared.MenuOptions{
 			Title: "Dictionary Config",
@@ -48,7 +52,7 @@ func DisplayMenu(r *bufio.Reader, dict *Dictionary) {
 			viewWordMap(dict)
 
 		case 5:
-			return
+			return nil
 		}
 
 		shared.PromptBackToMenu(r)

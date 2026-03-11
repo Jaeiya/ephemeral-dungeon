@@ -49,5 +49,8 @@ func main() {
 	}
 
 	r := bufio.NewReader(os.Stdin)
-	lib.DisplayMenu(r, dict)
+	err = lib.DisplayMenu(r, dict)
+	if err != nil {
+		panic(err)
+	}
 }
