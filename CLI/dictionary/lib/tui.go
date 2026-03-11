@@ -90,6 +90,10 @@ func promptAppendWord(r *bufio.Reader, dict *Dictionary) error {
 	input := strings.ToLower(shared.PromptInput("Append Words", r))
 	success, err := dict.AppendWord(input)
 
+	if !isValidInput(input) {
+		return fmt.Errorf("'%s' is not a valid word string", input)
+	}
+
 	if err != nil {
 		return err
 	} else if !success {
