@@ -289,6 +289,77 @@ func TestAppendWord(t *testing.T) {
 	})
 }
 
+func TestDeleteWords(t *testing.T) {
+	t.Run("Should delete word successfully", func(t *testing.T) {
+		store := &mockStorage{}
+		dict, err := NewDictionary(store)
+		require.NoError(t, err)
+
+		_, err = dict.AddWords("word1 word2 word3")
+		require.NoError(t, err)
+
+		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+		_, err = dict.DeleteWord("word2")
+		require.NoError(t, err, "should successfully delete word")
+
+		assert.Equal(
+			t,
+			dict.wordMap,
+			map[string]uint16{"word1": 1, "word3": 1},
+			"word2 should no longer exist",
+		)
+	})
+
+	t.Run("Returns false if word not found", func(t *testing.T) {
+		store := &mockStorage{}
+		dict, err := NewDictionary(store)
+		require.NoError(t, err)
+
+		_, err = dict.AddWords("word1 word2 word3")
+		require.NoError(t, err)
+
+		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+
+		exists, err := dict.DeleteWord("word4")
+		assert.False(t, exists)
+		assert.NoError(t, err)
+
+		assert.Equal(t, len(dict.wordMap), 3, "should still have 3 words")
+	})
+
+	t.Run("Fails when trying to delete more than one word", func(t *testing.T) {
+		store := &mockStorage{}
+		dict, err := NewDictionary(store)
+		require.NoError(t, err)
+
+		_, err = dict.AddWords("word1 word2 word3")
+		require.NoError(t, err)
+
+		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+
+		_, err = dict.DeleteWord("word1 word3")
+		assert.ErrorContains(t, err, "only one word can be deleted")
+
+		assert.Equal(t, len(dict.wordMap), 3, "should still have 3 words")
+	})
+
+	t.Run("Ignores word case", func(t *testing.T) {
+		store := &mockStorage{}
+		dict, err := NewDictionary(store)
+		require.NoError(t, err)
+
+		_, err = dict.AddWords("word1 word2 word3")
+		require.NoError(t, err)
+
+		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+
+		_, err = dict.DeleteWord("WORD3")
+		require.NoError(t, err)
+
+		assert.Equal(t, dict.wordMap, map[string]uint16{"word1": 1, "word2": 1})
+	})
+}
+
 func TestSaveFormatting(t *testing.T) {
 	store := &mockStorage{}
 	dict, err := NewDictionary(store)
@@ -297,6 +368,10 @@ func TestSaveFormatting(t *testing.T) {
 	_, err = dict.AddWords("word1 synm1")
 	require.NoError(t, err)
 	_, err = dict.AddWords("word2")
+	require.NoError(t, err)
+	_, err = dict.AppendWord("word2 synm2 synm3")
+	require.NoError(t, err)
+	_, err = dict.DeleteWord("synm2")
 	require.NoError(t, err)
 
 	// Load a fresh dictionary from the saved storage to verify binary output
@@ -309,6 +384,7 @@ func TestSaveFormatting(t *testing.T) {
 		"word1": 1,
 		"synm1": 1,
 		"word2": 2,
+		"synm3": 2,
 	}
 
 	assert.Equal(t, expectedMap, loadedDict.wordMap)

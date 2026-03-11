@@ -150,6 +150,25 @@ func (dict *Dictionary) AppendWord(wordInput string) (bool, error) {
 	return true, nil
 }
 
+func (dict *Dictionary) DeleteWord(wordInput string) (bool, error) {
+	if strings.Contains(wordInput, " ") {
+		return false, fmt.Errorf("only one word can be deleted at a time")
+	}
+
+	word := strings.ToLower(wordInput)
+	if _, exists := dict.wordMap[word]; !exists {
+		return false, nil
+	}
+
+	delete(dict.wordMap, word)
+
+	if err := dict.save(); err != nil {
+		return false, fmt.Errorf("failed to save on deletion::%w", err)
+	}
+
+	return true, nil
+}
+
 // save writes a header and dictionary data through the
 // storage interface.
 //

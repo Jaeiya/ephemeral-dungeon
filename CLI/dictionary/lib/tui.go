@@ -21,6 +21,7 @@ func DisplayMenu(r *bufio.Reader, dict *Dictionary) error {
 			Items: []string{
 				"Add Word",
 				"Append Word",
+				"Delete Word",
 				"View Word",
 				"View All",
 			},
@@ -44,14 +45,19 @@ func DisplayMenu(r *bufio.Reader, dict *Dictionary) error {
 			}
 
 		case 3:
-			if err := printWord(r, dict); err != nil {
+			if err := promptDeleteWord(r, dict); err != nil {
 				shared.PrintError(err)
 			}
 
 		case 4:
-			viewWordMap(dict)
+			if err := printWord(r, dict); err != nil {
+				shared.PrintError(err)
+			}
 
 		case 5:
+			viewWordMap(dict)
+
+		case 6:
 			return nil
 		}
 
@@ -88,6 +94,27 @@ func promptAppendWord(r *bufio.Reader, dict *Dictionary) error {
 		return err
 	} else if !success {
 		return fmt.Errorf("one or more of the words to append already exists")
+	}
+
+	return nil
+}
+
+func promptDeleteWord(r *bufio.Reader, dict *Dictionary) error {
+	input := strings.ToLower(shared.PromptInput("Delete Word", r))
+
+	if !isValidInput(input) {
+		return fmt.Errorf("'%s' is not a valid word string", input)
+	}
+
+	if len(input) == 0 {
+		return fmt.Errorf("empty input not allowed")
+	}
+
+	success, err := dict.DeleteWord(input)
+	if err != nil {
+		return err
+	} else if !success {
+		return fmt.Errorf("specified word does not exist")
 	}
 
 	return nil
