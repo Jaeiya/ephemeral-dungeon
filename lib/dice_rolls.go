@@ -16,15 +16,22 @@ func RollFirstAttack(init1, init2 int) bool {
 	return relativeRatio(init1, init2, 0.5)
 }
 
-// RollPercent returns true if the random chance succeeds.
+// RollPercent returns true if pRNG returns a value within
+// the % chance specified.
 //
-// 🔵 100 is a 100% chance of success and 0.1 is a 0.1%
-// chance of success
-func RollPercent(p float64) bool {
-	if p > 100 {
+// 🔵 Chance is the percentage that a roll succeeds. If
+// chance is 10 then there is a 10% chance that a roll
+// will succeed.
+//
+// 🔴 Panics when chance < 0 or chance > 100
+func RollPercent(chance float64) bool {
+	if chance < 0 {
+		panic("cannot calculate a negative percent")
+	}
+	if chance > 100 {
 		panic("cannot calculate a chance greater than 100%")
 	}
-	return rand.Float64() < (float64(p) / 100.0)
+	return rand.Float64() < (float64(chance) / 100.0)
 }
 
 func relativeRatio(stat1, stat2 int, weight float64) bool {
