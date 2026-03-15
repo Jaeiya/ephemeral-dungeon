@@ -29,11 +29,11 @@ DUNGEON LAYOUT
 
 `
 
-type Direction int
+type Direction uint16
 
 const (
-	None Direction = iota
-	North
+	None  Direction = 0
+	North Direction = 1 << iota
 	South
 	East
 	West
@@ -80,8 +80,8 @@ type Room interface {
 type Dungeon struct{}
 
 var (
-	roomDirections = []Direction{North, South, East, West}
-	hallDirections = []Direction{NorthEast, NorthWest, SouthEast, SouthWest}
+	roomDirections = [4]Direction{North, South, East, West}
+	hallDirections = [4]Direction{NorthEast, NorthWest, SouthEast, SouthWest}
 )
 
 // GenerateExits randomizes the possible exit directions and returns them
@@ -94,7 +94,7 @@ func (d Dungeon) GenerateExits(lastDir Direction) (rooms, halls []Direction) {
 
 func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
 	rooms := utils.FilterSlice(
-		roomDirections,
+		roomDirections[:],
 		func(d Direction) bool { return lastDir == d },
 	)
 
@@ -117,7 +117,7 @@ func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
 func (d Dungeon) genHallDirs(lastDir Direction) []Direction {
 	if RollPercent(23) {
 		halls := utils.FilterSlice(
-			hallDirections,
+			hallDirections[:],
 			func(d Direction) bool { return lastDir == d },
 		)
 		utils.Shuffle(halls)
