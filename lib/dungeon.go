@@ -93,54 +93,57 @@ func (d Dungeon) GenerateExits(lastDir Direction) (rooms, halls []Direction) {
 }
 
 func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
-	filtered := make([]Direction, 0, 4)
+	rooms := make([]Direction, 0, 4)
+	for _, d := range roomDirections {
+		if d == lastDir {
+			continue
+		}
+		rooms = append(rooms, d)
+	}
+
+	utils.Shuffle(rooms)
+
+	chances := [3]float64{45, 30, 20}
+
+	roomLimit := 1
+
+	for i := 1; i < len(rooms); i++ {
+		if RollPercent(chances[i-1]) {
+			roomLimit++
+		} else {
+			break
+		}
+	}
+
+	return rooms[:roomLimit]
+}
+
+func (d Dungeon) genHallDirs(lastDir Direction) []Direction {
+	chances := [4]float64{23, 27, 20, 10}
+
+	if !RollPercent(chances[0]) {
+		return []Direction{}
+	}
+
+	hallLimit := 1
+
+	halls := make([]Direction, 0, 4)
 	for _, d := range hallDirections {
 		if d == lastDir {
 			continue
 		}
-		filtered = append(filtered, d)
+		halls = append(halls, d)
 	}
 
-	utils.Shuffle(filtered)
+	utils.Shuffle(halls)
 
-	roomLimit := 1
-	if RollPercent(45) {
-		roomLimit += 1
-	}
-	if RollPercent(30) && roomLimit > 1 {
-		roomLimit += 1
-	}
-	if RollPercent(20) && roomLimit > 2 {
-		roomLimit += 1
-	}
-
-	return filtered[:roomLimit]
-}
-
-func (d Dungeon) genHallDirs(lastDir Direction) []Direction {
-	if RollPercent(23) {
-		halls := make([]Direction, 0, 4)
-		for _, d := range roomDirections {
-			if d == lastDir {
-				continue
-			}
-			halls = append(halls, d)
+	for i := 1; i < len(halls); i++ {
+		if RollPercent(chances[i]) {
+			hallLimit++
+		} else {
+			break
 		}
-
-		utils.Shuffle(halls)
-
-		hallLimit := 1
-		if RollPercent(27) {
-			hallLimit += 1
-		}
-		if RollPercent(20) && hallLimit > 1 {
-			hallLimit += 1
-		}
-		if RollPercent(10) && hallLimit > 2 {
-			hallLimit += 1
-		}
-		return halls[:hallLimit]
 	}
 
-	return []Direction{}
+	return halls[:hallLimit]
 }
