@@ -62,7 +62,7 @@ func (d Direction) String() string {
 	case SouthWest:
 		return "SouthWest"
 	default:
-		return "<missing_direction>"
+		return "<N/A>"
 	}
 }
 
