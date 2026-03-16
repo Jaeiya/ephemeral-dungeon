@@ -83,6 +83,8 @@ type Exits struct {
 	mask  Directions
 }
 
+type Dungeon struct{}
+
 var (
 	roomDirections = [4]Directions{North, South, East, West}
 	hallDirections = [4]Directions{NorthEast, NorthWest, SouthEast, SouthWest}
