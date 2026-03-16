@@ -101,8 +101,6 @@ func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
 		rooms = append(rooms, d)
 	}
 
-	utils.Shuffle(rooms)
-
 	chances := [3]float64{45, 30, 20}
 
 	roomLimit := 1
@@ -114,6 +112,8 @@ func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
 			break
 		}
 	}
+
+	utils.Shuffle(rooms)
 
 	return rooms[:roomLimit]
 }
@@ -135,8 +135,6 @@ func (d Dungeon) genHallDirs(lastDir Direction) []Direction {
 		halls = append(halls, d)
 	}
 
-	utils.Shuffle(halls)
-
 	for i := 1; i < len(halls); i++ {
 		if RollPercent(chances[i]) {
 			hallLimit++
@@ -144,6 +142,8 @@ func (d Dungeon) genHallDirs(lastDir Direction) []Direction {
 			break
 		}
 	}
+
+	utils.Shuffle(halls)
 
 	return halls[:hallLimit]
 }
