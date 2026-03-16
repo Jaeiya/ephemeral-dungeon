@@ -29,11 +29,11 @@ DUNGEON LAYOUT
 
 `
 
-type Direction uint16
+type Direction uint8
 
 const (
 	None  Direction = 0
-	North Direction = 1 << iota
+	North Direction = 1 << (iota - 1)
 	South
 	East
 	West
