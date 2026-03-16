@@ -29,11 +29,11 @@ DUNGEON LAYOUT
 
 `
 
-type Direction uint8
+type Directions uint8
 
 const (
-	None  Direction = 0
-	North Direction = 1 << (iota - 1)
+	None  Directions = 0
+	North Directions = 1 << (iota - 1)
 	South
 	East
 	West
@@ -43,7 +43,7 @@ const (
 	SouthWest
 )
 
-func (d Direction) String() string {
+func (d Directions) String() string {
 	switch d {
 	case North:
 		return "North"
@@ -67,7 +67,7 @@ func (d Direction) String() string {
 }
 
 type BaseRoom struct {
-	location Direction
+	location Directions
 	desc     string
 	objects  []string
 }
@@ -77,23 +77,40 @@ type Room interface {
 	interact(obj string)
 }
 
-type Dungeon struct{}
+type Exits struct {
+	rooms []Directions
+	halls []Directions
+	mask  Directions
+}
 
 var (
-	roomDirections = [4]Direction{North, South, East, West}
-	hallDirections = [4]Direction{NorthEast, NorthWest, SouthEast, SouthWest}
+	roomDirections = [4]Directions{North, South, East, West}
+	hallDirections = [4]Directions{NorthEast, NorthWest, SouthEast, SouthWest}
 )
 
 // GenerateExits randomizes the possible exit directions and returns them
 // as rooms and hallways.
 //
 // 🔵 Hallways have a significantly lower chance of appearing
-func (d Dungeon) GenerateExits(lastDir Direction) (rooms, halls []Direction) {
-	return d.genRoomDirs(lastDir), d.genHallDirs(lastDir)
+func (d Dungeon) GenerateExits(
+	lastDir Directions,
+) (rooms, halls []Directions, exits Directions) {
+	rooms = d.genRoomDirs(lastDir)
+	halls = d.genHallDirs(lastDir)
+
+	for _, r := range rooms {
+		exits |= r
+	}
+
+	for _, h := range halls {
+		exits |= h
+	}
+
+	return rooms, halls, exits
 }
 
-func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
-	rooms := make([]Direction, 0, 4)
+func (d Dungeon) genRoomDirs(lastDir Directions) []Directions {
+	rooms := make([]Directions, 0, 4)
 	for _, d := range roomDirections {
 		if d == lastDir {
 			continue
@@ -118,16 +135,16 @@ func (d Dungeon) genRoomDirs(lastDir Direction) []Direction {
 	return rooms[:roomLimit]
 }
 
-func (d Dungeon) genHallDirs(lastDir Direction) []Direction {
+func (d Dungeon) genHallDirs(lastDir Directions) []Directions {
 	chances := [4]float64{23, 27, 20, 10}
 
 	if !RollPercent(chances[0]) {
-		return []Direction{}
+		return []Directions{}
 	}
 
 	hallLimit := 1
 
-	halls := make([]Direction, 0, 4)
+	halls := make([]Directions, 0, 4)
 	for _, d := range hallDirections {
 		if d == lastDir {
 			continue
