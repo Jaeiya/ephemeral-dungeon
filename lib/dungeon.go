@@ -66,6 +66,13 @@ func (d Directions) String() string {
 	}
 }
 
+type CardinalChances [3]float64
+
+var (
+	OriginCardinal = CardinalChances{100, 100, 100}
+	StdCardinal    = CardinalChances{45, 30, 20}
+)
+
 type BaseRoom struct {
 	location Directions
 	desc     string
@@ -97,7 +104,7 @@ var (
 func (d Dungeon) GenerateExits(
 	lastDir Directions,
 ) (cardinals, hallways []Directions, exits Directions) {
-	cardinals = d.genCardinalDirs(lastDir)
+	cardinals = d.genCardinalDirs(lastDir, OriginCardinal)
 	hallways = d.genHallDirs(lastDir)
 
 	for _, r := range cardinals {
@@ -111,7 +118,9 @@ func (d Dungeon) GenerateExits(
 	return cardinals, hallways, exits
 }
 
-func (d Dungeon) genCardinalDirs(lastDir Directions) []Directions {
+// genCardinalDirs generates a slice of possible cardinal exits
+// based on the specified chances slice.
+func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []Directions {
 	dirs := make([]Directions, 0, 4)
 	for _, d := range cardinals {
 		if d == lastDir {
@@ -120,7 +129,6 @@ func (d Dungeon) genCardinalDirs(lastDir Directions) []Directions {
 		dirs = append(dirs, d)
 	}
 
-	chances := [3]float64{45, 30, 20}
 
 	roomLimit := 1
 
