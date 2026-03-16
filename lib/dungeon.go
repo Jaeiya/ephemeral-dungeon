@@ -173,4 +173,26 @@ func (d Dungeon) genHallDirs(lastDir Directions) []Directions {
 	utils.Shuffle(dirs)
 
 	return dirs[:hallLimit]
+
+func (d Dungeon) getOppositeDir(dir Directions) Directions {
+	switch dir {
+	case North:
+		return South
+	case South:
+		return North
+	case East:
+		return West
+	case West:
+		return East
+	case NorthEast:
+		return SouthWest
+	case SouthWest:
+		return NorthEast
+	case NorthWest:
+		return SouthEast
+	case SouthEast:
+		return NorthWest
+	default:
+		return None
+	}
 }
