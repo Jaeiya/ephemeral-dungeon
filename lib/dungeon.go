@@ -122,11 +122,11 @@ func (d Dungeon) GenerateExits(
 // based on the specified chances slice.
 func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []Directions {
 	dirs := make([]Directions, 0, 4)
-	for _, d := range cardinals {
-		if d == lastDir {
+	for _, dir := range cardinals {
+		if dir == d.getOppositeDir(lastDir) {
 			continue
 		}
-		dirs = append(dirs, d)
+		dirs = append(dirs, dir)
 	}
 
 	dirLimit := 1
@@ -154,11 +154,11 @@ func (d Dungeon) genHallDirs(lastDir Directions) []Directions {
 	dirLimit := 1
 
 	dirs := make([]Directions, 0, 4)
-	for _, d := range hallways {
-		if d == lastDir {
+	for _, dir := range hallways {
+		if dir == d.getOppositeDir(lastDir) {
 			continue
 		}
-		dirs = append(dirs, d)
+		dirs = append(dirs, dir)
 	}
 
 	for i := 1; i < len(dirs); i++ {
