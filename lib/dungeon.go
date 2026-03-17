@@ -104,8 +104,9 @@ var (
 func (d Dungeon) GenerateExits(
 	lastDir Directions,
 ) (cardinals, hallways []Directions, exits Directions) {
-	cardinals = d.genCardinalDirs(lastDir, OriginCardinal)
-	hallways = d.genHallDirs(lastDir)
+	cardinals = d.genCardinalDirs(lastDir, StdCardinal)
+	hallways = make([]Directions, 0, 4)
+	d.genHallDirs(&hallways, lastDir)
 
 	for _, r := range cardinals {
 		exits |= r
@@ -144,16 +145,18 @@ func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []
 	return dirs[:dirLimit]
 }
 
-func (d Dungeon) genHallDirs(lastDir Directions) []Directions {
+func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
 	chances := [4]float64{23, 27, 20, 10}
 
 	if !RollPercent(chances[0]) {
-		return []Directions{}
+		return
 	}
 
 	dirLimit := 1
 
-	dirs := make([]Directions, 0, 4)
+	var dirsArray [4]Directions
+	dirs := dirsArray[:0]
+
 	for _, dir := range hallways {
 		if dir == d.getOppositeDir(lastDir) {
 			continue
@@ -171,7 +174,7 @@ func (d Dungeon) genHallDirs(lastDir Directions) []Directions {
 
 	utils.Shuffle(dirs)
 
-	return dirs[:dirLimit]
+	*destDirs = append(*destDirs, dirs[:dirLimit]...)
 }
 
 func (d Dungeon) getOppositeDir(dir Directions) Directions {
