@@ -25,15 +25,13 @@ DUNGEON LAYOUT
 
 	- Every 10 rooms a boss will appear unless a hallway is taken
 		- The next room after the hallway will contain the boss
-
-
 `
 
 type Directions uint8
 
 const (
-	None  Directions = 0
-	North Directions = 1 << (iota - 1)
+	Origin Directions = 0
+	North  Directions = 1 << (iota - 1)
 	South
 	East
 	West
@@ -73,15 +71,18 @@ var (
 	StdCardinal    = CardinalChances{45, 30, 20}
 )
 
+var roomBuf = make([]Room, 8)
+
 type BaseRoom struct {
-	location Directions
-	desc     string
-	objects  []string
+	Rooms       []Room
+	Exits       []Directions
+	Description string
+	Direction   Directions
 }
 
-type Room interface {
-	findObj(obj string)
-	interact(obj string)
+type Room struct {
+	Description string
+	Direction   Directions
 }
 
 type Exits struct {
@@ -117,6 +118,32 @@ func (d Dungeon) GenerateExits(
 	}
 
 	return cardinals, hallways, exits
+}
+
+func (d Dungeon) GenRoom(lastDir Directions) BaseRoom {
+	var dirArray [8]Directions
+	dirs := dirArray[:0]
+
+	if lastDir == Origin {
+		dirs = d.genCardinalDirs(lastDir, OriginCardinal)
+	} else {
+		dirs = d.genCardinalDirs(lastDir, StdCardinal)
+	}
+
+	if lastDir != Origin {
+		d.genHallDirs(&dirs, lastDir)
+	}
+
+	for i := range dirs {
+		roomBuf[i] = Room{
+			Direction: dirs[i],
+		}
+	}
+
+	return BaseRoom{
+		Direction: lastDir,
+		Rooms:     roomBuf[:len(dirs)],
+	}
 }
 
 // genCardinalDirs generates a slice of possible cardinal exits
@@ -196,6 +223,6 @@ func (d Dungeon) getOppositeDir(dir Directions) Directions {
 	case SouthEast:
 		return NorthWest
 	default:
-		return None
+		return Origin
 	}
 }
