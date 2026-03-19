@@ -84,8 +84,8 @@ func NewDictionary(store DictStorage) (*Dictionary, error) {
 }
 
 // AddWords splits the wordInput by space character into a word
-// slice and adds them all as a single dictionary entry, where
-// they all reference the same ID.
+// slice and adds them individual dictionary entries where they
+// each have a unique ID.
 //
 // 🟡 Returns false if any words in the wordInput already exist
 // in the dictionary.
@@ -98,8 +98,9 @@ func (dict *Dictionary) AddWords(wordInput string) (bool, error) {
 		}
 	}
 
-	dict.length += 1
+	// This is used as the ID for every new word
 	for _, w := range words {
+		dict.length++
 		dict.wordMap[w] = dict.length
 	}
 

@@ -134,9 +134,9 @@ func TestAddWords(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, ok)
-		assert.Equal(t, uint16(1), dict.length)
+		assert.Equal(t, uint16(2), dict.length)
 		assert.Equal(t, uint16(1), dict.wordMap["word1"])
-		assert.Equal(t, uint16(1), dict.wordMap["word2"])
+		assert.Equal(t, uint16(2), dict.wordMap["word2"])
 	})
 
 	t.Run("Always adds words as lowercase", func(t *testing.T) {
@@ -298,14 +298,16 @@ func TestDeleteWords(t *testing.T) {
 		_, err = dict.AddWords("word1 word2 word3")
 		require.NoError(t, err)
 
-		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+		assert.Equal(t, len(dict.wordMap), 3, "should have 3 entries added")
+		assert.Equal(t, dict.length, uint16(3), "dict should have a length of 3")
+
 		_, err = dict.DeleteWord("word2")
 		require.NoError(t, err, "should successfully delete word")
 
 		assert.Equal(
 			t,
 			dict.wordMap,
-			map[string]uint16{"word1": 1, "word3": 1},
+			map[string]uint16{"word1": 1, "word3": 3},
 			"word2 should no longer exist",
 		)
 	})
@@ -352,11 +354,12 @@ func TestDeleteWords(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+		assert.Equal(t, uint16(3), dict.length, "dict should have a length of 3")
 
 		_, err = dict.DeleteWord("WORD3")
 		require.NoError(t, err)
 
-		assert.Equal(t, dict.wordMap, map[string]uint16{"word1": 1, "word2": 1})
+		assert.Equal(t, dict.wordMap, map[string]uint16{"word1": 1, "word2": 2})
 	})
 }
 
@@ -365,9 +368,7 @@ func TestSaveFormatting(t *testing.T) {
 	dict, err := NewDictionary(store)
 	require.NoError(t, err)
 
-	_, err = dict.AddWords("word1 synm1")
-	require.NoError(t, err)
-	_, err = dict.AddWords("word2")
+	_, err = dict.AddWords("word1 word2")
 	require.NoError(t, err)
 	_, err = dict.AppendWord("word2 synm2 synm3")
 	require.NoError(t, err)
@@ -382,7 +383,6 @@ func TestSaveFormatting(t *testing.T) {
 
 	expectedMap := map[string]uint16{
 		"word1": 1,
-		"synm1": 1,
 		"word2": 2,
 		"synm3": 2,
 	}
