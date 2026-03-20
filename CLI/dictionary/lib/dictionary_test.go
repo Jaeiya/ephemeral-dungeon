@@ -124,268 +124,268 @@ func TestNewDictionary(t *testing.T) {
 	})
 }
 
-func TestAddWords(t *testing.T) {
-	t.Run("Adds new words successfully", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
-
-		ok, err := dict.AddWords("word1 word2")
-
-		require.NoError(t, err)
-		assert.True(t, ok)
-		assert.Equal(t, uint16(2), dict.length)
-		assert.Equal(t, uint16(1), dict.wordMap["word1"])
-		assert.Equal(t, uint16(2), dict.wordMap["word2"])
-	})
-
-	t.Run("Always adds words as lowercase", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
-
-		ok, err := dict.AddWords("WORD1 WORD2")
-
-		require.NoError(t, err)
-		assert.True(t, ok)
-
-		_, exists := dict.wordMap["word1"]
-		assert.True(t, exists)
-
-		_, exists = dict.wordMap["word2"]
-		assert.True(t, exists)
-	})
-
-	t.Run("Increments dictionary length with new words", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
-
-		ok, err := dict.AddWords("word1")
-		require.NoError(t, err)
-		ok, err = dict.AddWords("word2")
-		require.NoError(t, err)
-		ok, err = dict.AddWords("word3")
-		require.NoError(t, err)
-
-		assert.True(t, ok)
-		assert.Equal(t, uint16(3), dict.length)
-		assert.Equal(t, uint16(1), dict.wordMap["word1"])
-		assert.Equal(t, uint16(2), dict.wordMap["word2"])
-		assert.Equal(t, uint16(3), dict.wordMap["word3"])
-	})
-
-	t.Run("Fails if word already exists", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
-
-		_, err = dict.AddWords("hello world")
-		require.NoError(t, err)
-
-		ok, err := dict.AddWords("world peace")
-
-		require.NoError(t, err)
-		assert.False(t, ok)
-		assert.NotContains(t, dict.wordMap, "peace", "peace should not have been added")
-	})
-
-	t.Run("Does not add partial failed words", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
-
-		_, err = dict.AddWords("word1 word2 word3")
-		require.NoError(t, err)
-
-		ok, err := dict.AddWords("word4 word5 word3")
-
-		require.NoError(t, err)
-		assert.False(t, ok)
-		assert.NotContains(t, dict.wordMap, "word4", "word4 should not have been added")
-	})
-}
-
-func TestAppendWord(t *testing.T) {
-	t.Run("Successfully appends word", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
-
-		_, err = dict.AddWords("word1")
-		require.NoError(t, err)
-
-		ok, err := dict.AppendWord("word1 synm1")
-
-		require.NoError(t, err)
-		assert.True(t, ok)
-		assert.Equal(
-			t,
-			dict.wordMap["word1"],
-			dict.wordMap["synm1"],
-			"word1 and synm1 should have the same ID",
-		)
-	})
+// func TestAddWords(t *testing.T) {
+// 	t.Run("Adds new words successfully", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
+
+// 		ok, err := dict.AddWords("word1 word2")
+
+// 		require.NoError(t, err)
+// 		assert.True(t, ok)
+// 		assert.Equal(t, uint16(2), dict.length)
+// 		assert.Equal(t, uint16(1), dict.wordMap["word1"])
+// 		assert.Equal(t, uint16(2), dict.wordMap["word2"])
+// 	})
+
+// 	t.Run("Always adds words as lowercase", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
+
+// 		ok, err := dict.AddWords("WORD1 WORD2")
+
+// 		require.NoError(t, err)
+// 		assert.True(t, ok)
+
+// 		_, exists := dict.wordMap["word1"]
+// 		assert.True(t, exists)
+
+// 		_, exists = dict.wordMap["word2"]
+// 		assert.True(t, exists)
+// 	})
+
+// 	t.Run("Increments dictionary length with new words", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
+
+// 		ok, err := dict.AddWords("word1")
+// 		require.NoError(t, err)
+// 		ok, err = dict.AddWords("word2")
+// 		require.NoError(t, err)
+// 		ok, err = dict.AddWords("word3")
+// 		require.NoError(t, err)
+
+// 		assert.True(t, ok)
+// 		assert.Equal(t, uint16(3), dict.length)
+// 		assert.Equal(t, uint16(1), dict.wordMap["word1"])
+// 		assert.Equal(t, uint16(2), dict.wordMap["word2"])
+// 		assert.Equal(t, uint16(3), dict.wordMap["word3"])
+// 	})
+
+// 	t.Run("Fails if word already exists", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
+
+// 		_, err = dict.AddWords("hello world")
+// 		require.NoError(t, err)
+
+// 		ok, err := dict.AddWords("world peace")
+
+// 		require.NoError(t, err)
+// 		assert.False(t, ok)
+// 		assert.NotContains(t, dict.wordMap, "peace", "peace should not have been added")
+// 	})
+
+// 	t.Run("Does not add partial failed words", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
+
+// 		_, err = dict.AddWords("word1 word2 word3")
+// 		require.NoError(t, err)
+
+// 		ok, err := dict.AddWords("word4 word5 word3")
+
+// 		require.NoError(t, err)
+// 		assert.False(t, ok)
+// 		assert.NotContains(t, dict.wordMap, "word4", "word4 should not have been added")
+// 	})
+// }
+
+// func TestAppendWord(t *testing.T) {
+// 	t.Run("Successfully appends word", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
+
+// 		_, err = dict.AddWords("word1")
+// 		require.NoError(t, err)
+
+// 		ok, err := dict.AppendWord("word1 synm1")
+
+// 		require.NoError(t, err)
+// 		assert.True(t, ok)
+// 		assert.Equal(
+// 			t,
+// 			dict.wordMap["word1"],
+// 			dict.wordMap["synm1"],
+// 			"word1 and synm1 should have the same ID",
+// 		)
+// 	})
 
-	t.Run("Always appends words as lowercase", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// 	t.Run("Always appends words as lowercase", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		_, err = dict.AddWords("WORD1")
-		require.NoError(t, err)
+// 		_, err = dict.AddWords("WORD1")
+// 		require.NoError(t, err)
 
-		ok, err := dict.AppendWord("WORD1 SYNM1")
+// 		ok, err := dict.AppendWord("WORD1 SYNM1")
 
-		require.NoError(t, err)
-		assert.True(t, ok)
+// 		require.NoError(t, err)
+// 		assert.True(t, ok)
 
-		_, exists := dict.wordMap["word1"]
-		assert.True(t, exists)
+// 		_, exists := dict.wordMap["word1"]
+// 		assert.True(t, exists)
 
-		_, exists = dict.wordMap["synm1"]
-		assert.True(t, exists)
-	})
+// 		_, exists = dict.wordMap["synm1"]
+// 		assert.True(t, exists)
+// 	})
 
-	t.Run("Fails if anchor word is missing", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// 	t.Run("Fails if anchor word is missing", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		ok, err := dict.AppendWord("word0 synm1")
+// 		ok, err := dict.AppendWord("word0 synm1")
 
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "first word must exist")
-		assert.False(t, ok)
-	})
+// 		require.Error(t, err)
+// 		assert.ErrorContains(t, err, "first word must exist")
+// 		assert.False(t, ok)
+// 	})
 
-	t.Run("Fails if word to append already exists", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// 	t.Run("Fails if word to append already exists", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		_, err = dict.AddWords("word1 synm1")
-		ok, err := dict.AppendWord("word1 synm1")
+// 		_, err = dict.AddWords("word1 synm1")
+// 		ok, err := dict.AppendWord("word1 synm1")
 
-		require.NoError(t, err)
-		assert.False(t, ok)
-	})
+// 		require.NoError(t, err)
+// 		assert.False(t, ok)
+// 	})
 
-	t.Run("does not add partial valid words", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// 	t.Run("does not add partial valid words", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		_, err = dict.AddWords("word1 synm2")
-		require.NoError(t, err)
+// 		_, err = dict.AddWords("word1 synm2")
+// 		require.NoError(t, err)
 
-		addedLen := len(dict.wordMap)
+// 		addedLen := len(dict.wordMap)
 
-		ok, err := dict.AppendWord("word1 synm1 synm2") // synm2 already exists
-		require.NoError(t, err)
+// 		ok, err := dict.AppendWord("word1 synm1 synm2") // synm2 already exists
+// 		require.NoError(t, err)
 
-		assert.Equal(t, addedLen, len(dict.wordMap))
-		assert.False(t, ok)
-	})
-}
+// 		assert.Equal(t, addedLen, len(dict.wordMap))
+// 		assert.False(t, ok)
+// 	})
+// }
 
-func TestDeleteWords(t *testing.T) {
-	t.Run("Should delete word successfully", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// func TestDeleteWords(t *testing.T) {
+// 	t.Run("Should delete word successfully", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		_, err = dict.AddWords("word1 word2 word3")
-		require.NoError(t, err)
+// 		_, err = dict.AddWords("word1 word2 word3")
+// 		require.NoError(t, err)
 
-		assert.Equal(t, len(dict.wordMap), 3, "should have 3 entries added")
-		assert.Equal(t, dict.length, uint16(3), "dict should have a length of 3")
+// 		assert.Equal(t, len(dict.wordMap), 3, "should have 3 entries added")
+// 		assert.Equal(t, dict.length, uint16(3), "dict should have a length of 3")
 
-		_, err = dict.DeleteWord("word2")
-		require.NoError(t, err, "should successfully delete word")
+// 		_, err = dict.DeleteWord("word2")
+// 		require.NoError(t, err, "should successfully delete word")
 
-		assert.Equal(
-			t,
-			dict.wordMap,
-			map[string]uint16{"word1": 1, "word3": 3},
-			"word2 should no longer exist",
-		)
-	})
+// 		assert.Equal(
+// 			t,
+// 			dict.wordMap,
+// 			map[string]uint16{"word1": 1, "word3": 3},
+// 			"word2 should no longer exist",
+// 		)
+// 	})
 
-	t.Run("Returns false if word not found", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// 	t.Run("Returns false if word not found", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		_, err = dict.AddWords("word1 word2 word3")
-		require.NoError(t, err)
+// 		_, err = dict.AddWords("word1 word2 word3")
+// 		require.NoError(t, err)
 
-		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+// 		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
 
-		exists, err := dict.DeleteWord("word4")
-		assert.False(t, exists)
-		assert.NoError(t, err)
+// 		exists, err := dict.DeleteWord("word4")
+// 		assert.False(t, exists)
+// 		assert.NoError(t, err)
 
-		assert.Equal(t, len(dict.wordMap), 3, "should still have 3 words")
-	})
+// 		assert.Equal(t, len(dict.wordMap), 3, "should still have 3 words")
+// 	})
 
-	t.Run("Fails when trying to delete more than one word", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// 	t.Run("Fails when trying to delete more than one word", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		_, err = dict.AddWords("word1 word2 word3")
-		require.NoError(t, err)
+// 		_, err = dict.AddWords("word1 word2 word3")
+// 		require.NoError(t, err)
 
-		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+// 		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
 
-		_, err = dict.DeleteWord("word1 word3")
-		assert.ErrorContains(t, err, "only one word can be deleted")
+// 		_, err = dict.DeleteWord("word1 word3")
+// 		assert.ErrorContains(t, err, "only one word can be deleted")
 
-		assert.Equal(t, len(dict.wordMap), 3, "should still have 3 words")
-	})
+// 		assert.Equal(t, len(dict.wordMap), 3, "should still have 3 words")
+// 	})
 
-	t.Run("Ignores word case", func(t *testing.T) {
-		store := &mockStorage{}
-		dict, err := NewDictionary(store)
-		require.NoError(t, err)
+// 	t.Run("Ignores word case", func(t *testing.T) {
+// 		store := &mockStorage{}
+// 		dict, err := NewDictionary(store)
+// 		require.NoError(t, err)
 
-		_, err = dict.AddWords("word1 word2 word3")
-		require.NoError(t, err)
+// 		_, err = dict.AddWords("word1 word2 word3")
+// 		require.NoError(t, err)
 
-		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
-		assert.Equal(t, uint16(3), dict.length, "dict should have a length of 3")
+// 		assert.Equal(t, len(dict.wordMap), 3, "should have 3 words added")
+// 		assert.Equal(t, uint16(3), dict.length, "dict should have a length of 3")
 
-		_, err = dict.DeleteWord("WORD3")
-		require.NoError(t, err)
+// 		_, err = dict.DeleteWord("WORD3")
+// 		require.NoError(t, err)
 
-		assert.Equal(t, dict.wordMap, map[string]uint16{"word1": 1, "word2": 2})
-	})
-}
+// 		assert.Equal(t, dict.wordMap, map[string]uint16{"word1": 1, "word2": 2})
+// 	})
+// }
 
-func TestSaveFormatting(t *testing.T) {
-	store := &mockStorage{}
-	dict, err := NewDictionary(store)
-	require.NoError(t, err)
+// func TestSaveFormatting(t *testing.T) {
+// 	store := &mockStorage{}
+// 	dict, err := NewDictionary(store)
+// 	require.NoError(t, err)
 
-	_, err = dict.AddWords("word1 word2")
-	require.NoError(t, err)
-	_, err = dict.AppendWord("word2 synm2 synm3")
-	require.NoError(t, err)
-	_, err = dict.DeleteWord("synm2")
-	require.NoError(t, err)
+// 	_, err = dict.AddWords("word1 word2")
+// 	require.NoError(t, err)
+// 	_, err = dict.AppendWord("word2 synm2 synm3")
+// 	require.NoError(t, err)
+// 	_, err = dict.DeleteWord("synm2")
+// 	require.NoError(t, err)
 
-	// Load a fresh dictionary from the saved storage to verify binary output
-	loadedDict, err := NewDictionary(store)
-	require.NoError(t, err, "failed to read back saved dictionary")
+// 	// Load a fresh dictionary from the saved storage to verify binary output
+// 	loadedDict, err := NewDictionary(store)
+// 	require.NoError(t, err, "failed to read back saved dictionary")
 
-	assert.Equal(t, uint16(2), loadedDict.length)
+// 	assert.Equal(t, uint16(2), loadedDict.length)
 
-	expectedMap := map[string]uint16{
-		"word1": 1,
-		"word2": 2,
-		"synm3": 2,
-	}
+// 	expectedMap := map[string]uint16{
+// 		"word1": 1,
+// 		"word2": 2,
+// 		"synm3": 2,
+// 	}
 
-	assert.Equal(t, expectedMap, loadedDict.wordMap)
-}
+// 	assert.Equal(t, expectedMap, loadedDict.wordMap)
+// }

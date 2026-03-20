@@ -10,18 +10,22 @@ import (
 	"github.com/jaeiya/monster/CLI/shared"
 )
 
-func DisplayMenu(r *bufio.Reader, dict *Dictionary) error {
-	if dict == nil {
-		return fmt.Errorf("dictionary not initialized")
+const (
+	dbPath   = "./dictionary.db"
+	tomlPath = "lib/dictionary/dictionary.toml"
+)
+
+func DisplayMenu(r *bufio.Reader) error {
+	dict, err := NewDictionary(NewFileStorage(dbPath))
+	if err != nil {
+		panic(err)
 	}
 
 	for {
 		choice, err := shared.PromptMenu(shared.MenuOptions{
 			Title: "Dictionary Config",
 			Items: []string{
-				"Add Word",
-				"Append Word",
-				"Delete Word",
+				"Build",
 				"View Word",
 				"View All",
 			},
@@ -34,94 +38,36 @@ func DisplayMenu(r *bufio.Reader, dict *Dictionary) error {
 		}
 
 		switch choice {
+
 		case 1:
-			if err := promptAddWord(r, dict); err != nil {
+			err := BuildDict(NewFileStorage(tomlPath))
+			if err != nil {
 				shared.PrintError(err)
+				break
 			}
+
+			dict, err = NewDictionary(NewFileStorage(dbPath))
+			if err != nil {
+				shared.PrintError(err)
+				break
+			}
+
+			fmt.Print(shared.ColorString("\n  ;c;Dictionary Re-Built!"))
 
 		case 2:
-			if err := promptAppendWord(r, dict); err != nil {
-				shared.PrintError(err)
-			}
-
-		case 3:
-			if err := promptDeleteWord(r, dict); err != nil {
-				shared.PrintError(err)
-			}
-
-		case 4:
 			if err := printWord(r, dict); err != nil {
 				shared.PrintError(err)
 			}
 
-		case 5:
+		case 3:
 			viewWordMap(dict)
 
-		case 6:
+		case 4:
 			return nil
 		}
 
 		shared.PromptBackToMenu(r)
 	}
-}
-
-func promptAddWord(r *bufio.Reader, dict *Dictionary) error {
-	input := strings.ToLower(shared.PromptInput("Add Word", r))
-
-	if !isValidInput(input) {
-		return fmt.Errorf("'%s' is not a valid word string", input)
-	}
-
-	if len(input) == 0 {
-		return fmt.Errorf("empty input not allowed")
-	}
-
-	success, err := dict.AddWords(input)
-	if err != nil {
-		return err
-	} else if !success {
-		return fmt.Errorf("one or all of '%s' already exists", input)
-	}
-
-	return nil
-}
-
-func promptAppendWord(r *bufio.Reader, dict *Dictionary) error {
-	input := strings.ToLower(shared.PromptInput("Append Words", r))
-	success, err := dict.AppendWord(input)
-
-	if !isValidInput(input) {
-		return fmt.Errorf("'%s' is not a valid word string", input)
-	}
-
-	if err != nil {
-		return err
-	} else if !success {
-		return fmt.Errorf("one or more of the words to append already exists")
-	}
-
-	return nil
-}
-
-func promptDeleteWord(r *bufio.Reader, dict *Dictionary) error {
-	input := strings.ToLower(shared.PromptInput("Delete Word", r))
-
-	if !isValidInput(input) {
-		return fmt.Errorf("'%s' is not a valid word string", input)
-	}
-
-	if len(input) == 0 {
-		return fmt.Errorf("empty input not allowed")
-	}
-
-	success, err := dict.DeleteWord(input)
-	if err != nil {
-		return err
-	} else if !success {
-		return fmt.Errorf("specified word does not exist")
-	}
-
-	return nil
 }
 
 func printWord(r *bufio.Reader, dict *Dictionary) error {
@@ -165,14 +111,4 @@ func viewWordMap(dict *Dictionary) {
 	for _, item := range items {
 		fmt.Printf("    %d %s\n", item.id, item.word)
 	}
-}
-
-// isValidInput returns false for all non-lowercase english letters or spaces
-func isValidInput(input string) bool {
-	for _, r := range input {
-		if r != 32 && (r < 97 || r > 122) {
-			return false
-		}
-	}
-	return true
 }

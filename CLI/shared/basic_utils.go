@@ -1,6 +1,8 @@
 package shared
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func ParseInt(s string) (int, error) {
 	newInt, err := strconv.ParseInt(s, 10, 0)
@@ -8,4 +10,13 @@ func ParseInt(s string) (int, error) {
 		return int(newInt), err
 	}
 	return int(newInt), nil
+}
+
+func HasLowercaseOnly(s string) bool {
+	for _, r := range s {
+		if r < 'a' || r > 'z' {
+			return false
+		}
+	}
+	return true
 }
