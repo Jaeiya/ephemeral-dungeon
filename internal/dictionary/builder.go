@@ -1,4 +1,4 @@
-package lib
+package dictionary
 
 import (
 	"bufio"
@@ -8,7 +8,7 @@ import (
 	"hash/crc32"
 	"strings"
 
-	"github.com/jaeiya/monster/CLI/shared"
+	"github.com/jaeiya/monster/internal/utils"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -19,16 +19,14 @@ var TomlDictionary struct {
 // dictLength (BigEndian uint16) + CRC32 + \n
 const _headerSize = 2 + 4 + 1
 
-var _dbStore = NewFileStorage("./dictionary.db")
-
-func BuildDict(store DictStorage) error {
-	data, err := store.ReadAll()
+func BuildDict(tomlStore, dictStore DictStorage) error {
+	data, err := tomlStore.ReadAll()
 	if err != nil {
 		return err
 	}
 
 	if len(data) == 0 {
-		return fmt.Errorf("specified dictionary file is empty")
+		return fmt.Errorf("dictionary TOML is empty")
 	}
 
 	err = toml.Unmarshal(data, &TomlDictionary)
@@ -55,14 +53,14 @@ func BuildDict(store DictStorage) error {
 			if strings.ContainsRune(word, ' ') {
 				return fmt.Errorf("words cannot contain spaces: '%s'", word)
 			}
-			if !shared.HasLowercaseOnly(word) {
+			if !utils.HasLowercaseOnly(word) {
 				return fmt.Errorf("word contains invalid characters: '%s'", word)
 			}
 			wordMap[word] = length
 		}
 	}
 
-	return save(_dbStore, length, wordMap)
+	return save(dictStore, length, wordMap)
 }
 
 // save writes a header and dictionary data through the

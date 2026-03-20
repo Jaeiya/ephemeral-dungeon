@@ -1,4 +1,4 @@
-package lib
+package dictionary
 
 import (
 	"bytes"
@@ -14,6 +14,8 @@ const (
 	headerSize = 2 + 4 + 1
 	newLineIdx = headerSize - 1
 )
+
+var ErrorDictEmpty = fmt.Errorf("specified dictionary file is empty")
 
 type DictStorage interface {
 	NewWriter() (io.WriteCloser, error)
@@ -35,7 +37,7 @@ func NewDictionary(store DictStorage) (*Dictionary, error) {
 	}
 
 	if len(fileData) == 0 {
-		return nil, fmt.Errorf("specified dictionary file is empty")
+		return nil, ErrorDictEmpty
 	}
 
 	header := fileData[:headerSize]

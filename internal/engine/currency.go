@@ -1,4 +1,4 @@
-package lib
+package engine
 
 var coinExchangeRates = []struct {
 	value int

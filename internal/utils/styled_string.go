@@ -10,7 +10,7 @@ import (
 
 var style = lipgloss.NewStyle()
 
-const tagLen = 4
+const _tagLen = 4
 
 var colorStyleMap = map[string]lipgloss.Style{
 	// ";gu;":  style.Underline(true).Foreground(ansi.BrightGreen),
@@ -83,13 +83,13 @@ func (ss *StyledString) Render() string {
 		if ss.text[i] != ';' && ss.text[i] != '@' {
 			continue
 		}
-		if i+tagLen > len(ss.text) {
+		if i+_tagLen > len(ss.text) {
 			break
 		}
-		if tagStyle, exists := colorStyleMap[ss.text[i:i+tagLen]]; exists {
+		if tagStyle, exists := colorStyleMap[ss.text[i:i+_tagLen]]; exists {
 			sb.WriteString(currentStyle.Render(ss.text[start:i]))
 			currentStyle = tagStyle
-			i += tagLen - 1 // -1 because loop does i++
+			i += _tagLen - 1 // -1 because loop does i++
 			start = i + 1
 		}
 	}
@@ -107,9 +107,9 @@ func (ss StyledString) Raw() string {
 	sb.Grow(len(ss.text))
 
 	for i := 0; i < len(ss.text); i++ {
-		if i+tagLen <= len(ss.text) {
-			if _, exists := colorCodes[ss.text[i:i+tagLen]]; exists {
-				i += tagLen - 1 // -1 loop does i++
+		if i+_tagLen <= len(ss.text) {
+			if _, exists := colorCodes[ss.text[i:i+_tagLen]]; exists {
+				i += _tagLen - 1 // -1 because loop does i++
 				continue
 			}
 		}

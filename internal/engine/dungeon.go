@@ -1,8 +1,6 @@
-package lib
+package engine
 
-import (
-	"github.com/jaeiya/monster/lib/utils"
-)
+import "github.com/jaeiya/monster/internal/utils"
 
 const worldInfo = `
 
@@ -68,7 +66,7 @@ type CardinalChances [3]float64
 
 var (
 	OriginCardinal = CardinalChances{100, 100, 100}
-	StdCardinal    = CardinalChances{45, 30, 20}
+	StdCardinal    = CardinalChances{40, 25, 20}
 )
 
 var roomBuf = make([]Room, 8)
@@ -173,7 +171,7 @@ func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []
 }
 
 func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
-	chances := [4]float64{23, 27, 20, 10}
+	chances := [4]float64{15, 20, 20, 20}
 
 	if !RollPercent(chances[0]) {
 		return

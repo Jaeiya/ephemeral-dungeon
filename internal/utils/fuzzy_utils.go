@@ -6,7 +6,7 @@ import (
 )
 
 func FuzzyFindWord(needle, haystack string) string {
-	needle = strings.ToLower(strings.TrimSpace(needle))
+	needle = strings.TrimSpace(needle)
 
 	if needle == "" {
 		return ""
