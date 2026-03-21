@@ -1,6 +1,6 @@
 module github.com/jaeiya/monster
 
-go 1.24.4
+go 1.26.1
 
 require (
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3
