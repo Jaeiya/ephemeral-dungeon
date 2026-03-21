@@ -73,7 +73,7 @@ var (
 	// idx0 = chance for 1 hallway to generate
 	// idx1 = chance for 2 hallways, etc...
 	_hallChances = [4]float64{15, 20, 20, 20}
-	_roomBuf     = make([]Room, 8)
+	_roomBuf     = [8]Room{}
 )
 
 type BaseRoom struct {
