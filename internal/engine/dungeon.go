@@ -66,12 +66,15 @@ type CardinalChances [3]float64
 
 var (
 	OriginCardinal = CardinalChances{100, 100, 100}
-	StdCardinal    = CardinalChances{40, 25, 20}
+	// Standard chances for 2, 3, & 4 rooms to generate with
+	// diminishing returns: 3rd room can't generate unless
+	// the 2nd room successfully generated.
+	StdCardinal = CardinalChances{40, 25, 20}
 )
 
 var (
-	// idx0 = chance for 1 hallway to generate
-	// idx1 = chance for 2 hallways, etc...
+	// 0: chance for 1 hallway to generate
+	// 1: chance for 2 hallways, etc...
 	_hallChances = [4]float64{15, 20, 20, 20}
 	_roomBuf     = [8]Room{}
 )
