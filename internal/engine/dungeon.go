@@ -69,7 +69,12 @@ var (
 	StdCardinal    = CardinalChances{40, 25, 20}
 )
 
-var roomBuf = make([]Room, 8)
+var (
+	// idx0 = chance for 1 hallway to generate
+	// idx1 = chance for 2 hallways, etc...
+	_hallChances = [4]float64{15, 20, 20, 20}
+	_roomBuf     = make([]Room, 8)
+)
 
 type BaseRoom struct {
 	Rooms       []Room
@@ -133,14 +138,14 @@ func (d Dungeon) GenRoom(lastDir Directions) BaseRoom {
 	}
 
 	for i := range dirs {
-		roomBuf[i] = Room{
+		_roomBuf[i] = Room{
 			Direction: dirs[i],
 		}
 	}
 
 	return BaseRoom{
 		Direction: lastDir,
-		Rooms:     roomBuf[:len(dirs)],
+		Rooms:     _roomBuf[:len(dirs)],
 	}
 }
 
@@ -171,9 +176,7 @@ func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []
 }
 
 func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
-	chances := [4]float64{15, 20, 20, 20}
-
-	if !RollPercent(chances[0]) {
+	if !RollPercent(_hallChances[0]) {
 		return
 	}
 
@@ -190,7 +193,7 @@ func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
 	}
 
 	for i := 1; i < len(dirs); i++ {
-		if RollPercent(chances[i]) {
+		if RollPercent(_hallChances[i]) {
 			dirLimit++
 		} else {
 			break
