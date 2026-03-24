@@ -107,7 +107,7 @@ func (cs Character) Dodge() int {
 	a := float64(cs.Agility())
 	i := float64(cs.Intelligence())
 
-	rating := 0.15 * (a + 0.25*i)
+	rating := 0.15 * (a + 0.33*i)
 
 	return int(math.Round(rating))
 }
