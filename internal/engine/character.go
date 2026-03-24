@@ -114,8 +114,8 @@ func (cs Character) Dodge() int {
 
 // Initiative
 //
-// 🔵 Used to calculate who attacks first during combat.
-// 🔵 Used to calculate counter-attack chance during combat.
+// TODO: Used to calculate who attacks first during combat.
+// TODO: Used to calculate counter-attack chance during combat.
 func (cs Character) Initiative() int {
 	i := float64(cs.Intelligence())
 	d := float64(cs.Dexterity())
@@ -127,15 +127,15 @@ func (cs Character) Initiative() int {
 
 // Resistance
 //
-// 🔵 Used to calculate status-effect resistance
+// TODO: Used to calculate status-effect resistance
 func (cs Character) Resistance() int {
 	return int(math.Round(oneThird * float64(cs.vitality)))
 }
 
 // Stamina
 //
-// 🔵 Used to calculate exhaustion during combat.
-// 🔵 Used to calculate exhaustion during training.
+// TODO: Used to calculate exhaustion during combat.
+// TODO: Used to calculate exhaustion during training.
 func (cs Character) Stamina() int {
 	rating := 0.75 * float64(cs.vitality)
 	return int(math.Round(rating))
@@ -143,7 +143,7 @@ func (cs Character) Stamina() int {
 
 // HitPoints
 //
-// 🔵 Used to create life pool for character.
+// TODO: Used to create life pool for character.
 func (cs Character) HitPoints() int {
 	return int(math.Round(0.5 * float64(cs.vitality)))
 }
