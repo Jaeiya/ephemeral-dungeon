@@ -34,14 +34,14 @@ func RollPercent(chance float64) bool {
 	return rand.Float64() < (float64(chance) / 100.0)
 }
 
-// RollRelativeChance checks whether the primary stat has a chance
-// to succeed over the secondary stat.
+// RollRelativeChance uses a relative ratio RNG algorithm to
+// see whether a primary stat succeeds over a secondary stat.
 //
-// 🔵 The larger the primary stat, the higher the chance to
-// return true. The larger the secondary stat, the higher the
-// chance to return false.
+// 🔵 Returns true if primary stat succeeds and false otherwise
 //
 // 🔵 If both stats are equal, the chance to succeed is 50%
+//
+// 🔴 Panics if either stat is negative
 func RollRelativeChance(primary, secondary int) bool {
 	if primary < 0 || secondary < 0 {
 		panic("stats should never be less than zero")
