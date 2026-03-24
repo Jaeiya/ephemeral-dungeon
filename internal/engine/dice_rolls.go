@@ -20,8 +20,7 @@ func RollFirstAttack(init1, init2 int) bool {
 // the % chance specified.
 //
 // 🔵 Chance is the percentage that a roll succeeds. If
-// chance is 10 then there is a 10% chance that a roll
-// will succeed.
+// chance is 10 then there is a 10% chance of success.
 //
 // 🔴 Panics when chance < 0 or > 100
 func RollPercent(chance float64) bool {
@@ -31,7 +30,7 @@ func RollPercent(chance float64) bool {
 	if chance > 100 {
 		panic("cannot calculate a chance greater than 100%")
 	}
-	return rand.Float64() < (float64(chance) / 100.0)
+	return rand.Float64() < chance/100.0
 }
 
 // RollRelativeChance uses a relative ratio RNG algorithm to
