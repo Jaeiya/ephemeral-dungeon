@@ -7,13 +7,13 @@ import (
 // RollDodge checks if a character can evade an attack
 // based on the defenders dodge and attackers agility.
 func RollDodge(dodge, agility int) bool {
-	return relativeRatio(dodge, agility)
+	return RollRelativeChance(dodge, agility)
 }
 
 // RollFirstAttack checks to see who strikes first in
 // combat based on the characters initiative.
 func RollFirstAttack(init1, init2 int) bool {
-	return relativeRatio(init1, init2)
+	return RollRelativeChance(init1, init2)
 }
 
 // RollPercent returns true if pRNG returns a value within
@@ -34,7 +34,7 @@ func RollPercent(chance float64) bool {
 	return rand.Float64() < (float64(chance) / 100.0)
 }
 
-// relativeRatio checks whether the primary stat has a chance
+// RollRelativeChance checks whether the primary stat has a chance
 // to succeed over the secondary stat.
 //
 // 🔵 The larger the primary stat, the higher the chance to
@@ -42,7 +42,7 @@ func RollPercent(chance float64) bool {
 // chance to return false.
 //
 // 🔵 If both stats are equal, the chance to succeed is 50%
-func relativeRatio(primary, secondary int) bool {
+func RollRelativeChance(primary, secondary int) bool {
 	if primary < 0 || secondary < 0 {
 		panic("stats should never be less than zero")
 	}
