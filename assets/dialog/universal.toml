@@ -1,0 +1,19 @@
+[[questions]]
+question = [
+    "how do I play the game",
+    "how do I play",
+]
+answer = """
+This is some kind of long answer that can be \
+on multiple lines for ease of reading but won't be particularly \
+necessary all the time.
+"""
+
+
+[[questions]]
+question = [
+    "how do I move",
+    "what are the controls",
+]
+answer = "some kind of answer pertaining to the queries"
+
