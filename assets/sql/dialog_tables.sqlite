@@ -1,0 +1,22 @@
+-- Drop children first, then parents (to avoid constraint errors)
+DROP TABLE IF EXISTS universal_dialog_queries;
+DROP TABLE IF EXISTS npc_dialog_queries;
+DROP TABLE IF EXISTS answers;
+
+-- Create the Parent tables first
+CREATE TABLE answers (
+    id INTEGER PRIMARY KEY,
+    content TEXT
+);
+
+-- Create the Child tables second
+CREATE TABLE universal_dialog_queries (
+    id BLOB PRIMARY KEY,
+    answer_id INTEGER,
+    FOREIGN KEY (answer_id) REFERENCES answers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE npc_dialog_queries (
+    id INTEGER,
+    name TEXT,
+)
