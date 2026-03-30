@@ -1,0 +1,53 @@
+###### Mood ENUM ######
+# Neutral   = 0
+# Happy     = 1
+# Sad       = 2
+# Depressed = 3
+# Angry     = 4
+# Enraged   = 5
+#######################
+
+
+[[npcs]]
+id = 1
+job = "guide"
+name = "Gerald"
+
+    [[npcs.questions]]
+    queries = [
+        "how are you",
+        "are you okay"
+    ]
+        [[npcs.questions.answers]]
+        mood = 0
+        answers = [
+            "I'm fine, thanks for asking!",
+            "I'm okay.",
+            "Nothing to report really...",
+        ]
+        [[npcs.questions.answers]]
+        mood = 1
+        answers = [
+            "I'm great actually!",
+            "I'm in a pretty good mood",
+            "If I was a big younger, I think I'd like to go into dungeon myself...",
+        ]
+
+    [[npcs.questions]]
+    queries = [
+        "what's your name"
+    ]
+        [[npcs.questions.answers]]
+        mood = 0
+        answers = [
+            "My name is Gerald.",
+            "I am called Gerald."
+        ]
+
+
+
+
+[[npcs]]
+id = 2
+name = "technician"
+[[questions]]
