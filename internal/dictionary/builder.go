@@ -16,7 +16,7 @@ var TomlDictionary struct {
 	Synonyms [][]string `toml:"synonyms"`
 }
 
-// dictLength (BigEndian uint16) + CRC32 + \n
+// dictLength (uint16_be) + CRC32 (uint32_be) + new line (0x0A)
 const _headerSize = 2 + 4 + 1
 
 func BuildDict(tomlStore, dictStore DictStorage) error {
@@ -63,14 +63,11 @@ func BuildDict(tomlStore, dictStore DictStorage) error {
 	return save(dictStore, length, wordMap)
 }
 
-// save writes a header and dictionary data through the
-// storage interface.
+// save writes a header and dictionary data through the storage
+// interface.
 //
-// 🔵 The header is made up of a BigEndian uint16
-// dictionary length and a CRC32 of the
-// dictionary data.
-//
-// 🔵 The CRC32 is used to check for data corruption
+//	🔵 Header structure: uint16_be|uint32_be|0x0A
+//	Dict Length|CRC32 Checksum of Dict data|New Line
 func save(store DictStorage, length uint16, wordMap map[string]uint16) error {
 	if len(wordMap) == 0 {
 		fileBuf, _ := createHeader(0, nil)
