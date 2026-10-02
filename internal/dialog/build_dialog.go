@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	_dialogSqlPath  = "./assets/sql/dialog_tables.sqlite"
-	_dialogTomlPath = "./assets/dialog/universal.toml"
+	dialogSqlPath  = "./assets/sql/dialog_tables.sqlite"
+	dialogTomlPath = "./assets/dialog/universal.toml"
 )
 
 type QueryCode uint8
@@ -53,7 +53,7 @@ type Question struct {
 
 func BuildDialog(db *sql.DB) error {
 	var d UniversalDialog
-	data, err := os.ReadFile(_dialogTomlPath)
+	data, err := os.ReadFile(dialogTomlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read TOML dialog file: %w", err)
 	}
@@ -63,7 +63,7 @@ func BuildDialog(db *sql.DB) error {
 		return err
 	}
 
-	sqlSchema, err := os.ReadFile(_dialogSqlPath)
+	sqlSchema, err := os.ReadFile(dialogSqlPath)
 	if err != nil {
 		return fmt.Errorf("failed to read dialog sql file: %w", err)
 	}
