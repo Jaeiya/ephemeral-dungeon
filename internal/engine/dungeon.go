@@ -58,25 +58,27 @@ func (d Directions) String() string {
 	case SouthWest:
 		return "SouthWest"
 	default:
-		return "<N/A>"
+		return "nil"
 	}
 }
 
 type CardinalChances [3]float64
 
 var (
-	OriginCardinal = CardinalChances{100, 100, 100}
-	// Standard chances for 2, 3, & 4 rooms to generate with
-	// diminishing returns: 3rd room can't generate unless
-	// the 2nd room successfully generated.
-	StdCardinal = CardinalChances{40, 25, 20}
+	// Hub room
+	originChances = CardinalChances{100, 100, 100}
+
+	// Default Room: chances for 2, 3, & 4 rooms to generate
+	// with diminishing returns: 3rd room can't generate
+	// unless the 2nd room successfully generated.
+	defaultChances = CardinalChances{40, 25, 20}
 )
 
 var (
 	// 0: chance for 1 hallway to generate
 	// 1: chance for 2 hallways, etc...
-	_hallChances = [4]float64{15, 20, 20, 20}
-	_roomBuf     = [8]Room{}
+	hallChances = [4]float64{15, 20, 20, 20}
+	roomBuf     = [8]Room{}
 )
 
 type BaseRoom struct {
@@ -111,7 +113,7 @@ var (
 func (d Dungeon) GenerateExits(
 	lastDir Directions,
 ) (cardinals, hallways []Directions, exits Directions) {
-	cardinals = d.genCardinalDirs(lastDir, StdCardinal)
+	cardinals = d.genCardinalDirs(lastDir, defaultChances)
 	hallways = make([]Directions, 0, 4)
 	d.genHallDirs(&hallways, lastDir)
 
@@ -131,9 +133,9 @@ func (d Dungeon) GenRoom(lastDir Directions) BaseRoom {
 	dirs := dirArray[:0]
 
 	if lastDir == Origin {
-		dirs = d.genCardinalDirs(lastDir, OriginCardinal)
+		dirs = d.genCardinalDirs(lastDir, originChances)
 	} else {
-		dirs = d.genCardinalDirs(lastDir, StdCardinal)
+		dirs = d.genCardinalDirs(lastDir, defaultChances)
 	}
 
 	if lastDir != Origin {
@@ -141,14 +143,15 @@ func (d Dungeon) GenRoom(lastDir Directions) BaseRoom {
 	}
 
 	for i := range dirs {
-		_roomBuf[i] = Room{
+		roomBuf[i] = Room{
+			// TODO: procedurally generate room description and objects
 			Direction: dirs[i],
 		}
 	}
 
 	return BaseRoom{
 		Direction: lastDir,
-		Rooms:     _roomBuf[:len(dirs)],
+		Rooms:     roomBuf[:len(dirs)],
 	}
 }
 
@@ -164,11 +167,8 @@ func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []
 	}
 
 	dirLimit := 1
-
-	for i := 1; i < len(dirs); i++ {
-		if RollPercent(chances[i-1]) {
-			dirLimit++
-		} else {
+	for ; dirLimit < len(dirs); dirLimit++ {
+		if !Chance(chances[dirLimit-1]) {
 			break
 		}
 	}
@@ -179,7 +179,7 @@ func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []
 }
 
 func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
-	if !RollPercent(_hallChances[0]) {
+	if !Chance(hallChances[0]) {
 		return
 	}
 
@@ -196,7 +196,7 @@ func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
 	}
 
 	for i := 1; i < len(dirs); i++ {
-		if RollPercent(_hallChances[i]) {
+		if Chance(hallChances[i]) {
 			dirLimit++
 		} else {
 			break

@@ -4,26 +4,26 @@ import (
 	"math/rand/v2"
 )
 
-// RollDodge checks if a character can evade an attack
+// DodgeChance checks if a character can evade an attack
 // based on the defenders dodge and attackers agility.
-func RollDodge(dodge, agility int) bool {
-	return RollRelativeChance(dodge, agility)
+func DodgeChance(dodge, agility int) bool {
+	return RelativeChance(dodge, agility)
 }
 
-// RollFirstAttack checks to see who strikes first in
+// FirstAttackChance checks to see who strikes first in
 // combat based on the characters initiative.
-func RollFirstAttack(init1, init2 int) bool {
-	return RollRelativeChance(init1, init2)
+func FirstAttackChance(init1, init2 int) bool {
+	return RelativeChance(init1, init2)
 }
 
-// RollPercent returns true if pRNG returns a value within
+// Chance returns true if pRNG returns a value within
 // the % chance specified.
 //
 // 🔵 Chance is the percentage that a roll succeeds. If
 // chance is 10 then there is a 10% chance of success.
 //
 // 🔴 Panics when chance < 0 or > 100
-func RollPercent(chance float64) bool {
+func Chance(chance float64) (success bool) {
 	if chance < 0 {
 		panic("cannot calculate a negative percent")
 	}
@@ -33,7 +33,7 @@ func RollPercent(chance float64) bool {
 	return rand.Float64() < chance/100.0
 }
 
-// RollRelativeChance uses a relative ratio RNG algorithm to
+// RelativeChance uses a relative ratio RNG algorithm to
 // see whether a primary stat succeeds over a secondary stat.
 //
 // 🔵 Returns true if primary stat succeeds and false otherwise
@@ -41,7 +41,7 @@ func RollPercent(chance float64) bool {
 // 🔵 If both stats are equal, the chance to succeed is 50%
 //
 // 🔴 Panics if either stat is negative
-func RollRelativeChance(primary, secondary int) bool {
+func RelativeChance(primary, secondary int) bool {
 	if primary < 0 || secondary < 0 {
 		panic("stats should never be less than zero")
 	}
