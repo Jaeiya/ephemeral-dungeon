@@ -60,17 +60,15 @@ func main() {
 	for i := 0; i < len(rooms); i += 4 {
 		r := rooms[i : i+4]
 
-		sizeIdx := 0
 		roomLen := 0
-		for k := len(r) - 1; k > -1; k-- {
-			if r[k] > 0 {
-				sizeIdx = k
-				roomLen = k + 1
+		for _, v := range r {
+			if v == 0 {
 				break
 			}
+			roomLen++
 		}
 
-		roomSizes[sizeIdx] += 1
+		roomSizes[roomLen-1] += 1
 		if roomLen == 1 {
 			oneCount += 1
 		} else {
