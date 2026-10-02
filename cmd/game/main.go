@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/jaeiya/monster/internal/engine"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -16,11 +17,16 @@ func main() {
 	// 	fmt.Printf("Room %d: %+v\n", i+1, r.Direction)
 	// }
 
-	// return
+	// count := 0
+	// for i := range 50 {
+	// 	val := engine.CalcXPToLevel(i + 1)
+	// 	fmt.Println(i+1, val)
+	// 	count += val
+	// }
 
 	worldSize := 500
-	rooms := make([]engine.Directions, worldSize*4)
-	halls := make([]engine.Directions, worldSize*4)
+	rooms := make([]engine.Direction, worldSize*4)
+	halls := make([]engine.Direction, worldSize*4)
 	totalRooms := 0
 
 	for i := range worldSize {
@@ -29,6 +35,12 @@ func main() {
 		copy(rooms[i*4:], r)
 		copy(halls[i*4:], h)
 	}
+
+	// for i := range 4 * 10 {
+	// 	if i%4 == 0 {
+	// 		fmt.Printf("%+v\n", rooms[i:i+4])
+	// 	}
+	// }
 
 	// roomCounts := make([]int, worldSize)
 	// for i, r := range rooms {

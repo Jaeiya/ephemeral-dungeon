@@ -25,11 +25,11 @@ DUNGEON LAYOUT
 		- The next room after the hallway will contain the boss
 `
 
-type Directions uint8
+type Direction uint8
 
 const (
-	Origin Directions = 0
-	North  Directions = 1 << (iota - 1)
+	Origin Direction = 0
+	North  Direction = 1 << (iota - 1)
 	South
 	East
 	West
@@ -39,7 +39,7 @@ const (
 	SouthWest
 )
 
-func (d Directions) String() string {
+func (d Direction) String() string {
 	switch d {
 	case North:
 		return "North"
@@ -83,27 +83,27 @@ var (
 
 type BaseRoom struct {
 	Rooms       []Room
-	Exits       []Directions
+	Exits       []Direction
 	Description string
-	Direction   Directions
+	Direction   Direction
 }
 
 type Room struct {
 	Description string
-	Direction   Directions
+	Direction   Direction
 }
 
 type Exits struct {
-	cardinals []Directions
-	hallways  []Directions
-	mask      Directions
+	cardinals []Direction
+	hallways  []Direction
+	mask      Direction
 }
 
 type Dungeon struct{}
 
 var (
-	cardinals = [4]Directions{North, South, East, West}
-	hallways  = [4]Directions{NorthEast, NorthWest, SouthEast, SouthWest}
+	cardinals = [4]Direction{North, South, East, West}
+	hallways  = [4]Direction{NorthEast, NorthWest, SouthEast, SouthWest}
 )
 
 // GenerateExits randomizes the possible exit directions and returns them
@@ -111,10 +111,10 @@ var (
 //
 // 🔵 Hallways have a significantly lower chance of appearing
 func (d Dungeon) GenerateExits(
-	lastDir Directions,
-) (cardinals, hallways []Directions, exits Directions) {
+	lastDir Direction,
+) (cardinals, hallways []Direction, exits Direction) {
 	cardinals = d.genCardinalDirs(lastDir, defaultChances)
-	hallways = make([]Directions, 0, 4)
+	hallways = make([]Direction, 0, 4)
 	d.genHallDirs(&hallways, lastDir)
 
 	for _, r := range cardinals {
@@ -128,8 +128,8 @@ func (d Dungeon) GenerateExits(
 	return cardinals, hallways, exits
 }
 
-func (d Dungeon) GenRoom(lastDir Directions) BaseRoom {
-	var dirArray [8]Directions
+func (d Dungeon) GenRoom(lastDir Direction) BaseRoom {
+	var dirArray [8]Direction
 	dirs := dirArray[:0]
 
 	if lastDir == Origin {
@@ -157,8 +157,8 @@ func (d Dungeon) GenRoom(lastDir Directions) BaseRoom {
 
 // genCardinalDirs generates a slice of possible cardinal exits
 // based on the specified chances slice.
-func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []Directions {
-	dirs := make([]Directions, 0, 4)
+func (d Dungeon) genCardinalDirs(lastDir Direction, chances CardinalChances) []Direction {
+	dirs := make([]Direction, 0, 4)
 	for _, dir := range cardinals {
 		if dir == d.getOppositeDir(lastDir) {
 			continue
@@ -178,14 +178,14 @@ func (d Dungeon) genCardinalDirs(lastDir Directions, chances CardinalChances) []
 	return dirs[:dirLimit]
 }
 
-func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
+func (d Dungeon) genHallDirs(destDirs *[]Direction, lastDir Direction) {
 	if !Chance(hallChances[0]) {
 		return
 	}
 
 	dirLimit := 1
 
-	var dirsArray [4]Directions
+	var dirsArray [4]Direction
 	dirs := dirsArray[:0]
 
 	for _, dir := range hallways {
@@ -208,7 +208,7 @@ func (d Dungeon) genHallDirs(destDirs *[]Directions, lastDir Directions) {
 	*destDirs = append(*destDirs, dirs[:dirLimit]...)
 }
 
-func (d Dungeon) getOppositeDir(dir Directions) Directions {
+func (d Dungeon) getOppositeDir(dir Direction) Direction {
 	switch dir {
 	case North:
 		return South
