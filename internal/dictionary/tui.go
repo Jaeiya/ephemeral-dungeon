@@ -16,6 +16,15 @@ const (
 	tomlPath = "./assets/dictionary.toml"
 )
 
+type ViewState uint8
+
+const (
+	ViewBuild = ViewState(iota)
+	ViewWord
+	ViewAll
+	ViewExit
+)
+
 var (
 	dbStore   = NewFileStorage(dbPath)
 	tomlStore = NewFileStorage(tomlPath)
@@ -43,9 +52,9 @@ func DisplayMenu(r *bufio.Reader) error {
 			continue
 		}
 
-		switch choice {
+		switch ViewState(choice) {
 
-		case 1:
+		case ViewBuild:
 			err := BuildDict(tomlStore, dbStore)
 			if err != nil {
 				utils.PrintError(err)
@@ -60,7 +69,7 @@ func DisplayMenu(r *bufio.Reader) error {
 
 			fmt.Print(utils.ColorString("\n  ;c;Dictionary Re-Built!"))
 
-		case 2:
+		case ViewWord:
 			if dict == nil {
 				utils.PrintError(ErrorDictEmpty)
 				break
@@ -70,7 +79,7 @@ func DisplayMenu(r *bufio.Reader) error {
 				utils.PrintError(err)
 			}
 
-		case 3:
+		case ViewAll:
 			if dict == nil {
 				utils.PrintError(ErrorDictEmpty)
 				break
@@ -78,7 +87,7 @@ func DisplayMenu(r *bufio.Reader) error {
 
 			viewWordMap(dict)
 
-		case 4:
+		case ViewExit:
 			return nil
 		}
 
@@ -88,13 +97,13 @@ func DisplayMenu(r *bufio.Reader) error {
 
 func printWord(r *bufio.Reader, dict *Dictionary) error {
 	input := strings.ToLower(utils.PromptInput("View Word", r))
-	wordID, exists := dict.wordMap[input]
+	wordID, exists := dict.WordMap[input]
 	if !exists {
 		return fmt.Errorf("could not find '%s'", input)
 	}
 
 	words := []string{}
-	for word, dID := range dict.wordMap {
+	for word, dID := range dict.WordMap {
 		if dID == wordID && word != input {
 			words = append(words, word)
 		}
@@ -114,8 +123,8 @@ func viewWordMap(dict *Dictionary) {
 		id   uint16
 	}
 
-	items := make([]entry, 0, len(dict.wordMap))
-	for k, v := range dict.wordMap {
+	items := make([]entry, 0, len(dict.WordMap))
+	for k, v := range dict.WordMap {
 		items = append(items, entry{k, v})
 	}
 

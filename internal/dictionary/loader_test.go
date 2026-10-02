@@ -114,9 +114,9 @@ func TestNewDictionary(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, uint16(1), dict.length)
-		assert.Equal(t, uint16(1), dict.wordMap["w1"])
-		assert.Equal(t, uint16(1), dict.wordMap["w2"])
-		assert.Equal(t, uint16(2), dict.wordMap["w3"])
+		assert.Equal(t, uint16(1), dict.WordMap["w1"])
+		assert.Equal(t, uint16(1), dict.WordMap["w2"])
+		assert.Equal(t, uint16(2), dict.WordMap["w3"])
 	})
 }
 
