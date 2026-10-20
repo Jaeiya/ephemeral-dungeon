@@ -115,9 +115,7 @@ var (
 // as rooms and hallways.
 //
 // 🔵 Hallways have a significantly lower chance of appearing
-func (d Dungeon) GenerateExits(
-	lastDir Direction,
-) (cardinals, hallways []Direction, exits Direction) {
+func (d Dungeon) GenerateExits(lastDir Direction) (cardinals, hallways []Direction, exits Direction) {
 	cardinals = d.genCardinalDirs(lastDir, defaultChances)
 	hallways = make([]Direction, 0, 4)
 	d.genHallDirs(&hallways, lastDir)
