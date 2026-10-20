@@ -195,8 +195,10 @@ func (d Dungeon) genHallDirs(destDirs *[]Direction, lastDir Direction) {
 	var dirsArray [4]Direction
 	dirs := dirsArray[:0]
 
+	enteredDir := d.getOppositeDir(lastDir)
+
 	for _, dir := range hallways {
-		if dir == d.getOppositeDir(lastDir) {
+		if dir == enteredDir {
 			continue
 		}
 		dirs = append(dirs, dir)
