@@ -94,7 +94,7 @@ type BaseRoom struct {
 
 type Room struct {
 	Description string
-	Direction   Direction
+	Exits       []Direction
 }
 
 type Exits struct {
@@ -149,7 +149,7 @@ func (d Dungeon) GenRoom(lastDir Direction) BaseRoom {
 	for i := range dirs {
 		roomBuf[i] = Room{
 			// TODO: procedurally generate room description and objects
-			Direction: dirs[i],
+			Exits: dirs,
 		}
 	}
 
