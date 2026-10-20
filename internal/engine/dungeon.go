@@ -95,6 +95,7 @@ type BaseRoom struct {
 type Room struct {
 	Description string
 	Exits       []Direction
+	Hallways    []Direction
 }
 
 type Exits struct {
