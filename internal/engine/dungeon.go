@@ -162,12 +162,14 @@ func (d Dungeon) GenRoom(lastDir Direction) BaseRoom {
 // genCardinalDirs generates a slice of possible cardinal exits
 // based on the specified chances slice.
 func (d Dungeon) genCardinalDirs(lastDir Direction, chances CardinalChances) []Direction {
-	dirs := make([]Direction, 0, 4)
+	dirs := [4]Direction{}
+	dirCount := 0
 	for _, dir := range cardinals {
 		if dir == d.getOppositeDir(lastDir) {
 			continue
 		}
-		dirs = append(dirs, dir)
+		dirs[dirCount] = dir
+		dirCount++
 	}
 
 	dirLimit := 1
@@ -177,7 +179,7 @@ func (d Dungeon) genCardinalDirs(lastDir Direction, chances CardinalChances) []D
 		}
 	}
 
-	utils.Shuffle(dirs)
+	utils.Shuffle(dirs[:])
 
 	return dirs[:dirLimit]
 }
