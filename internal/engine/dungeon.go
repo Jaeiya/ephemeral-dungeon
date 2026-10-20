@@ -70,13 +70,17 @@ var (
 
 	// Default Room: chances for 2, 3, & 4 rooms to generate
 	// with diminishing returns: 3rd room can't generate
-	// unless the 2nd room successfully generated.
+	// unless the 2nd room successfully generated, etc...
 	defaultChances = CardinalChances{40, 25, 20}
 )
 
 var (
+	// The chances for a hallways to generate where each hallway
+	// after the first, is dependant on the previous one being
+	// successful in order to roll the chance.
+	//
 	// 0: chance for 1 hallway to generate
-	// 1: chance for 2 hallways, etc...
+	// 1: chance for 2nd hallway if 1st hallway succeeds, etc...
 	hallChances = [4]float64{15, 20, 20, 20}
 	roomBuf     = [8]Room{}
 )
