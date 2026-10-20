@@ -27,9 +27,9 @@ func NewSimulator() Simulator {
 	return Simulator{}
 }
 
-func (s Simulator) SimulateRooms(worldSize int) {
-	world := s.GenerateWorld(worldSize)
-	h := s.GenerateHallStats(world.HallExits, worldSize)
+func (s Simulator) SimulateRooms(roomCount int) {
+	world := s.GenerateWorld(roomCount)
+	h := s.GenerateHallStats(world.HallExits, roomCount)
 	r := s.GenerateRoomStats(world.RoomExits)
 
 	spacingSum := 0
@@ -47,7 +47,7 @@ func (s Simulator) SimulateRooms(worldSize int) {
 	}
 
 	fmt.Println()
-	fmt.Printf("Total Rooms: %d\n", worldSize)
+	fmt.Printf("Total Rooms: %d\n", roomCount)
 	fmt.Printf("Total Exits: %d\n", world.RoomExitsCount)
 	fmt.Printf("Total Halls: %d\n\n", world.HallExitsCount)
 	fmt.Printf(
@@ -64,20 +64,20 @@ func (s Simulator) SimulateRooms(worldSize int) {
 	)
 	fmt.Printf("Max Hall Spacing: %3d (max # of rooms between 2 halls)\n\n", h.MaxZeroHallRun)
 	for i, size := range r.ExitCounts {
-		fmt.Printf("Rooms %d-exit: %d (%0.f%%)\n", i+1, size, calcPercent(size, worldSize))
+		fmt.Printf("Rooms %d-exit: %d (%0.f%%)\n", i+1, size, calcPercent(size, roomCount))
 	}
 
 	fmt.Println()
 
 	for i, size := range h.HallCounts {
-		fmt.Printf("Rooms %d-halls: %d (%.2f%%)\n", i, size, calcPercent(size, worldSize))
+		fmt.Printf("Rooms %d-halls: %d (%.2f%%)\n", i, size, calcPercent(size, roomCount))
 	}
 
 	fmt.Println()
 
 	hallChance := 0.0
 	for i := range 4 {
-		hallChance += calcPercent(h.HallCounts[i+1], worldSize)
+		hallChance += calcPercent(h.HallCounts[i+1], roomCount)
 	}
 	fmt.Printf("Hall Chance: %.2f%%\n", hallChance)
 }
