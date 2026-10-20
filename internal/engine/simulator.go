@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Simulator struct{}
 
@@ -184,4 +187,106 @@ func (s Simulator) GenerateHallStats(halls []Direction, worldSize int) Simulated
 		ZeroHallRuns:   zeroHallRuns,
 		MaxZeroHallRun: maxZeroHallRun,
 	}
+}
+
+func (s Simulator) SimulateXp(levelCap, xpStart int, rate float64) {
+	levelXp := s.GenerateXpLevels(levelCap, xpStart, rate)
+
+	fmt.Printf("\n")
+
+	distMap := make(map[int]int, len(levelXp))
+	for lvl := range levelCap {
+		if lvl+1 >= levelCap {
+			break
+		}
+		distMap[lvl] = levelXp[lvl+1] - levelXp[lvl]
+	}
+
+	distSum := 0
+	distCount := 0
+	minXpGain := distMap[1]
+	maxXpGain := 0
+	for d := range len(distMap) {
+		// level 0 is always the base xp
+		if d == 0 {
+			continue
+		}
+		if d+1 >= len(distMap) {
+			break
+		}
+		diff := distMap[d+1] - distMap[d]
+		if diff < minXpGain {
+			minXpGain = diff
+		}
+		if diff > maxXpGain {
+			maxXpGain = diff
+		}
+		distSum += diff
+		distCount++
+	}
+
+	fmt.Println()
+
+	fmt.Printf("XP Gain Factor: %0.2f\n", rate)
+	fmt.Printf("Max XP Gain: %d/level\n", maxXpGain)
+	fmt.Printf("Min XP Gain: %d/level\n", minXpGain)
+	fmt.Printf("Avg XP Gain: %0.2f/level\n", float64(distSum)/float64(distCount))
+	fmt.Printf("Level %d XP: %d\n", levelCap, levelXp[levelCap-1])
+	fmt.Println()
+
+	printShortRange := func(l int) {
+		if l >= levelCap {
+			return
+		}
+		var sb strings.Builder
+		for level := l; level <= l+4; level++ {
+			if level > l {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(fmt.Sprintf("%d:%d", level, levelXp[level]))
+		}
+		fmt.Printf("%s\n", sb.String())
+	}
+
+	printShortRange(0)
+	printShortRange(5)
+	printShortRange(10)
+	printShortRange(30)
+	printShortRange(50)
+	if levelCap > 100 {
+		for l := 100; l < levelCap; l += 100 {
+			if l >= 1000 {
+				break
+			}
+			printShortRange(l)
+		}
+	}
+
+	if levelCap > 1000 {
+		for l := 1000; l < levelCap; l += 1000 {
+			if l >= 10000 {
+				break
+			}
+			printShortRange(l)
+		}
+	}
+	if levelCap > 10000 {
+		for l := 10000; l < levelCap; l += 10000 {
+			if l >= 100000 {
+				break
+			}
+			printShortRange(l)
+		}
+	}
+}
+
+// GenerateXpLevels generates a level map, that maps a level to how much XP
+// is required to achieve each level.
+func (s Simulator) GenerateXpLevels(levelCap, xpStart int, rate float64) []int {
+	levelsXp := make([]int, levelCap)
+	levelsXp[0] = 0
+	for level := range levelCap - 1 {
+		levelsXp[level+1] = CalcXP(level+1, xpStart, rate)
+	}
+	return levelsXp
 }
