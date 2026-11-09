@@ -71,25 +71,24 @@ func (d Direction) String() string {
 }
 
 type (
-	CardinalChances [3]float64
-	DiagonalChances [4]float64
+	DirectionChances [4]float64
 )
 
 var (
 	// The chances for exits to be generated in the first room
 	// of a dungeon.
-	originChances = CardinalChances{100, 100, 100}
+	originChances = DirectionChances{100, 100, 100, 100}
 
 	// The chances for an exit to generate. One cardinal direction
 	// always generates, but the subsequent 3 directions require
 	// the previous to have succeeded. If the 2nd exit fails
 	// to generate, then only 1 exit will generate.
-	exitChances = CardinalChances{40, 25, 20}
+	exitChances = DirectionChances{100, 40, 25, 20}
 
 	// The chances for a hallway to generate. Subsequent hallways
 	// can only generate if the previous one succeeds. If the
 	// first hallway fails, no hallways are generated.
-	hallChances = DiagonalChances{15, 20, 20, 20}
+	hallChances = DirectionChances{15, 20, 20, 20}
 )
 
 type BaseRoom struct {
@@ -153,38 +152,16 @@ func (d Dungeon) GenRoom(lastDir Direction) Room {
 	return room
 }
 
-// GenExits generates a slice of possible cardinal exits
-// based on the specified chances slice.
-func (d Dungeon) GenExits(lastDir Direction, chances CardinalChances) []Direction {
-	dirs := cardinals
+func (d Dungeon) GenDirections(lastDir Direction, dirs [4]Direction, chances DirectionChances) []Direction {
 	utils.Shuffle(dirs[:])
 
 	enteredFrom := d.getOppositeDir(lastDir)
 
 	dirCount := 0
-	for _, dir := range dirs {
+	for i := range dirs {
+		dir := dirs[i]
+
 		if enteredFrom == dir {
-			continue
-		}
-		if dirCount > 0 && !Chance(chances[dirCount-1]) {
-			break
-		}
-		dirs[dirCount] = dir
-		dirCount++
-	}
-
-	return dirs[:dirCount]
-}
-
-func (d Dungeon) GenHalls(lastDir Direction, chances DiagonalChances) []Direction {
-	dirs := diagonals
-	utils.Shuffle(dirs[:])
-
-	enteredDir := d.getOppositeDir(lastDir)
-
-	dirCount := 0
-	for _, dir := range dirs {
-		if enteredDir == dir {
 			continue
 		}
 		if !Chance(chances[dirCount]) {
@@ -199,6 +176,14 @@ func (d Dungeon) GenHalls(lastDir Direction, chances DiagonalChances) []Directio
 	}
 
 	return dirs[:dirCount]
+}
+
+func (d Dungeon) GenExits(lastDir Direction, chances DirectionChances) []Direction {
+	return d.GenDirections(lastDir, cardinals, chances)
+}
+
+func (d Dungeon) GenHalls(lastDir Direction, chances DirectionChances) []Direction {
+	return d.GenDirections(lastDir, diagonals, chances)
 }
 
 func (d Dungeon) getOppositeDir(dir Direction) Direction {
