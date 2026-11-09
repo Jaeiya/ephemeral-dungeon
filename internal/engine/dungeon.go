@@ -7,8 +7,12 @@ const worldInfo = `
 
 DUNGEON LAYOUT
 	- Rooms should be dynamically generated
+		- Exits should be randomly generated
+			- Exits do NOT need a room until necessary
+				- If the player looks into an exit, generate the room
+				- If there is only 1 exit, generate the room
 
-	- Rooms are not navigable backwards
+	- Rooms are not navigable backwards (Ephemeral)
 
 	- Diagonal directions should always be hallways with high-risk, high-reward events
 		- Groups of enemies
