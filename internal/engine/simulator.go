@@ -208,11 +208,11 @@ func (s Simulator) SimulateXp(levelCap, xpStart int, rate float64) {
 	fmt.Printf("\n")
 
 	distMap := make(map[int]int, len(levelXp))
-	for lvl := range levelCap {
-		if lvl+1 >= levelCap {
+	for level := range levelCap {
+		if level+1 >= levelCap {
 			break
 		}
-		distMap[lvl] = levelXp[lvl+1] - levelXp[lvl]
+		distMap[level] = levelXp[level+1] - levelXp[level]
 	}
 
 	distSum := 0
