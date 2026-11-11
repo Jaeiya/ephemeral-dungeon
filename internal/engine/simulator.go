@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"strings"
 )
 
@@ -100,9 +101,11 @@ func (s Simulator) GenerateWorld(size int) SimulatedWorld {
 	hallExits := make([]Direction, size*4)
 	var totalRoomExits int
 	var totalHallExits int
+	possibleDirections := [8]Direction{North, South, East, West, NorthWest, NorthEast, SouthWest, SouthEast}
 
 	for i := range size {
-		r, h, _ := Dungeon{}.GenerateExits(Origin)
+		lastDir := possibleDirections[rand.IntN(8)]
+		r, h, _ := Dungeon{}.GenerateExits(lastDir)
 		totalRoomExits += len(r)
 		totalHallExits += len(h)
 		copy(roomExits[i*4:], r)
