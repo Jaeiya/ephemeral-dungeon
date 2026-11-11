@@ -11,6 +11,7 @@ type Simulator struct{}
 type SimulatedWorld struct {
 	RoomExits      []Direction
 	HallExits      []Direction
+	MaxRoomSpacing int
 	RoomExitsCount int
 	HallExitsCount int
 }
@@ -76,7 +77,11 @@ func (s Simulator) SimulateRooms(roomCount int) {
 		"Avg Hall Spacing: %3d (avg # of rooms between 2 halls)\n",
 		spacingSum/len(h.ZeroHallRuns),
 	)
-	fmt.Printf("Max Hall Spacing: %3d (max # of rooms between 2 halls)\n\n", h.MaxZeroHallRun)
+	fmt.Printf("Max Hall Spacing: %3d (max # of rooms between 2 halls)\n", h.MaxZeroHallRun)
+	fmt.Printf(
+		"Max Exit Spacing: %3d (max # of 1-exit/1-hall rooms between multi-exit-hall rooms)\n\n",
+		world.MaxRoomSpacing,
+	)
 	for i, size := range r.ExitCounts {
 		fmt.Printf("Rooms %d-exit: %d (%0.f%%)\n", i+1, size, calcPercent(size, roomCount))
 	}
@@ -102,18 +107,29 @@ func (s Simulator) GenerateWorld(size int) SimulatedWorld {
 	var totalRoomExits int
 	var totalHallExits int
 	possibleDirections := [8]Direction{North, South, East, West, NorthWest, NorthEast, SouthWest, SouthEast}
+	maxRoomSpacing := 0
 
+	roomSpacing := 0
 	for i := range size {
 		lastDir := possibleDirections[rand.IntN(8)]
 		r, h, _ := Dungeon{}.GenerateExits(lastDir)
 		totalRoomExits += len(r)
 		totalHallExits += len(h)
+		if len(r) > 1 || len(h) > 0 {
+			if roomSpacing > maxRoomSpacing {
+				maxRoomSpacing = roomSpacing
+			}
+			roomSpacing = 0
+		}
+		roomSpacing++
 		copy(roomExits[i*4:], r)
 		copy(hallExits[i*4:], h)
 	}
+
 	return SimulatedWorld{
 		RoomExits:      roomExits,
 		HallExits:      hallExits,
+		MaxRoomSpacing: maxRoomSpacing,
 		RoomExitsCount: totalRoomExits,
 		HallExitsCount: totalHallExits,
 	}
