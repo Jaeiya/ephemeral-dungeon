@@ -40,6 +40,15 @@ func (s Simulator) SimulateRooms(roomCount int) {
 		spacingSum += count
 	}
 
+	roomCounts := 0
+	for i := range r.ExitCounts {
+		roomCounts += r.ExitCounts[i] * (i + 1)
+	}
+
+	for i := range h.HallCounts {
+		roomCounts += h.HallCounts[i] * i
+	}
+
 	roomSpacingSum := 0
 	for _, count := range r.SingleExitRuns {
 		roomSpacingSum += count
@@ -52,7 +61,8 @@ func (s Simulator) SimulateRooms(roomCount int) {
 	fmt.Println()
 	fmt.Printf("Total Rooms: %d\n", roomCount)
 	fmt.Printf("Total Exits: %d\n", world.RoomExitsCount)
-	fmt.Printf("Total Halls: %d\n\n", world.HallExitsCount)
+	fmt.Printf("Total Halls: %d\n", world.HallExitsCount)
+	fmt.Printf("Avg Exits: %0.2f per room\n\n", float64(roomCounts)/float64(roomCount))
 	fmt.Printf(
 		"Avg Room Spacing: %3d (avg # of 1-exit rooms until a multi-exit room)\n",
 		roomSpacingSum/len(r.SingleExitRuns),
